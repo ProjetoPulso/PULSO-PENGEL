@@ -11,7 +11,7 @@
   <!-- Lucide Icons CDN -->
   <script src="https://unpkg.com/lucide@latest"></script>
   <!-- PULSO Unified API Client -->
-  <script src="pulso_app.js"></script>
+  <script src="pulso_app.js?v=2"></script>
   <script>
     tailwind.config = {
       darkMode: 'class',
@@ -1398,7 +1398,7 @@
           return;
         } catch (err) {
           // Só bloqueia se o backend FastAPI respondeu explicitamente com erro de validação/autorização
-          if (!err.isNoBackend && (err.status === 401 || err.status === 403 || err.status === 422)) {
+          if (!err.isNoBackend && err.message !== "Erro de comunicação com o servidor PULSO." && (err.status === 401 || err.status === 403 || err.status === 422)) {
             showAuthError(err.message || "Código incorreto ou expirado.");
             return;
           }
