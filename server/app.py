@@ -18,6 +18,7 @@ from fastapi.responses import FileResponse, JSONResponse, Response as RawRespons
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
+from .connectors import PT_CONNECTORS
 from .db import HASHER, get_db, seed_demo_data
 from .hybrid import MAX_UPLOAD, MIMES, extract_document
 from .local_ollama import EngineError, LocalOllama
@@ -753,6 +754,172 @@ def preview_exam_file(exam_id: str, request: Request):
         media_type=row["mime_type"] or "application/octet-stream",
         headers={"Content-Disposition": f'inline; filename="{row["file_name"] or "documento"}"'},
     )
+
+
+class ConnectorConnectReq(BaseModel):
+    connected: bool = True
+
+
+class EmergencyTriggerReq(BaseModel):
+    mode: str = "manual_hold_2s"
+    onWrist: bool = True
+    gps: Optional[str] = "41.1780° N, 8.6080° W (Porto)"
+    neighborsNotified: int = 3
+    notes: str = ""
+
+
+def _ensure_connector_table(db) -> None:
+    db.execute(
+        """CREATE TABLE IF NOT EXISTS connector_links (
+               patient_id TEXT NOT NULL,
+               provider TEXT NOT NULL,
+               connected INTEGER NOT NULL DEFAULT 0,
+               last_sync REAL,
+               PRIMARY KEY (patient_id, provider)
+           )"""
+    )
+
+
+def _find_connector(provider: str) -> dict[str, Any]:
+    for c in PT_CONNECTORS:
+        if c["id"] == provider:
+            return c
+    raise HTTPException(404, "Conector de saúde desconhecido.")
+
+
+@app.get("/api/connectors")
+def list_connectors(request: Request):
+    sess = _get_session(request)
+    with get_db(write=True) as db:
+        _ensure_connector_table(db)
+        rows = db.execute(
+            "SELECT provider, connected, last_sync FROM connector_links WHERE patient_id = ?",
+            (sess["patient_id"],),
+        ).fetchall()
+    state_map = {r["provider"]: {"connected": bool(r["connected"]), "lastSync": r["last_sync"]} for r in rows}
+    items = []
+    for c in PT_CONNECTORS:
+        st = state_map.get(c["id"], {"connected": c["id"] == "sns24", "lastSync": None})
+        items.append({**c, "connected": st["connected"], "lastSync": st["lastSync"]})
+    return {"connectors": items}
+
+
+@app.post("/api/connectors/{provider}/connect")
+def toggle_connector(provider: str, body: ConnectorConnectReq, request: Request):
+    sess = _get_session(request)
+    conn = _find_connector(provider)
+    with get_db(write=True) as db:
+        _ensure_connector_table(db)
+        db.execute(
+            """INSERT INTO connector_links(patient_id, provider, connected, last_sync)
+               VALUES (?, ?, ?, NULL)
+               ON CONFLICT(patient_id, provider) DO UPDATE SET connected = excluded.connected""",
+            (sess["patient_id"], provider, 1 if body.connected else 0),
+        )
+        action = "CONNECTOR_LINKED" if body.connected else "CONNECTOR_UNLINKED"
+        _record_audit(
+            db,
+            sess["patient_id"],
+            sess["role"],
+            sess["user"]["displayName"],
+            action,
+            f"Conector {conn['name']} ({conn['protocol']}) {'associado' if body.connected else 'desligado'}.",
+        )
+    return {"ok": True, "provider": provider, "connected": body.connected}
+
+
+@app.post("/api/connectors/{provider}/sync")
+def sync_connector(provider: str, request: Request):
+    sess = _get_session(request)
+    conn = _find_connector(provider)
+    sample = conn["sampleExam"]
+    exam_id = f"conn-{sess['patient_id']}-{sample['externalId']}"
+    now = time.time()
+    imported = 0
+    with get_db(write=True) as db:
+        _ensure_connector_table(db)
+        db.execute(
+            """INSERT INTO connector_links(patient_id, provider, connected, last_sync)
+               VALUES (?, ?, 1, ?)
+               ON CONFLICT(patient_id, provider) DO UPDATE SET connected = 1, last_sync = excluded.last_sync""",
+            (sess["patient_id"], provider, now),
+        )
+        existing = db.execute("SELECT id FROM exams WHERE id = ?", (exam_id,)).fetchone()
+        if not existing:
+            db.execute(
+                """INSERT INTO exams(id, patient_id, title, category, exam_type, specialty, issuer, exam_date, summary, extracted_values, file_name, mime_type, file_blob, added_by_role, added_by_name, created_at, updated_at)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    exam_id,
+                    sess["patient_id"],
+                    sample["title"],
+                    sample["category"],
+                    sample["examType"],
+                    sample["specialty"],
+                    sample["issuer"],
+                    sample["examDate"],
+                    sample["summary"],
+                    json.dumps(sample["extractedValues"]),
+                    None,
+                    None,
+                    None,
+                    sess["role"],
+                    f"API {conn['name']}",
+                    now,
+                    now,
+                ),
+            )
+            imported = 1
+        _record_audit(
+            db,
+            sess["patient_id"],
+            sess["role"],
+            sess["user"]["displayName"],
+            "CONNECTOR_SYNC",
+            f"Sincronização {conn['name']} ({conn['protocol']}): {imported} novo(s) registo(s).",
+        )
+    return {"ok": True, "provider": provider, "imported": imported, "examId": exam_id, "lastSync": now}
+
+
+@app.post("/api/emergency/trigger")
+def trigger_emergency(body: EmergencyTriggerReq, request: Request):
+    sess = _get_session(request)
+    evid = f"emg-{uuid.uuid4().hex[:10]}"
+    now = time.time()
+    today = time.strftime("%Y-%m-%d")
+    title = f"ALERTA SOS ({body.mode}) · 112 & {body.neighborsNotified} Vizinhos"
+    details = (
+        f"Pulso={body.onWrist} · GPS={body.gps or 'N/D'} · "
+        f"Vizinhos={body.neighborsNotified} · {body.notes.strip() or 'Acionamento de emergência médica'}"
+    )
+    with get_db(write=True) as db:
+        db.execute(
+            """INSERT INTO events(id, patient_id, title, event_type, start_date, end_date, notes, exam_id, added_by_role, added_by_name, created_at, updated_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (
+                evid,
+                sess["patient_id"],
+                title,
+                "urgent",
+                today,
+                None,
+                details,
+                None,
+                sess["role"],
+                sess["user"]["displayName"],
+                now,
+                now,
+            ),
+        )
+        _record_audit(
+            db,
+            sess["patient_id"],
+            sess["role"],
+            sess["user"]["displayName"],
+            "EMERGENCY_SOS_TRIGGERED",
+            details,
+        )
+    return {"ok": True, "id": evid, "gps": body.gps, "neighborsNotified": body.neighborsNotified, "timestamp": now}
 
 
 @app.post("/api/measurements")

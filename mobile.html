@@ -11,7 +11,7 @@
   <!-- Lucide Icons CDN -->
   <script src="https://unpkg.com/lucide@latest"></script>
   <!-- PULSO Unified API Client -->
-  <script src="pulso_app.js?v=3"></script>
+  <script src="pulso_app.js?v=4"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
     
@@ -39,6 +39,15 @@
     ::-webkit-scrollbar {
       display: none;
     }
+    html.light body, html.light .bg-\[\#0C1416\], html.light .bg-\[\#131F22\], html.light .bg-\[\#162529\], html.light .bg-\[\#090F11\]\/95 {
+      background-color: #F8FAFC !important;
+      color: #0F172A !important;
+    }
+    html.light .text-white { color: #0F172A !important; }
+    html.light .text-\[\#8DA39E\] { color: #475569 !important; }
+    html.light .text-\[\#5EEAD4\] { color: #0F766E !important; }
+    html.light .border-\[\#1E3338\] { border-color: #CBD5E1 !important; }
+    html.light .bg-\[\#B8F04A\], html.light .bg-\[\#B8F04A\] * { color: #0C1416 !important; }
   </style>
 </head>
 <body class="bg-[#0C1416] text-[#E4ECE8] min-h-screen flex justify-center items-center p-0 sm:p-4">
@@ -371,6 +380,82 @@
 
       </div>
 
+      <!-- ======================================================== -->
+      <!-- VISTA 4: SOS / PULSEIRA & REDE DE VIZINHOS               -->
+      <!-- ======================================================== -->
+      <div id="mobile-view-sos" class="mobile-view hidden space-y-3 pb-6">
+        <div class="text-center space-y-1 pt-1">
+          <span class="px-2.5 py-0.5 rounded-full bg-red-950/80 text-red-300 text-[10px] font-bold border border-red-500/40 uppercase tracking-wider">Smartwatch + Telemóvel · Anti-Falso Alarme</span>
+          <h2 class="text-lg font-extrabold text-white tracking-tight">Emergência Médica (AVC / Cardíaco)</h2>
+          <p class="text-[11px] text-[#8DA39E]">Validação biométrica no pulso antes de alertar vizinhos próximos e o 112.</p>
+        </div>
+
+        <!-- Sensor No Pulso -->
+        <div class="p-3 rounded-2xl bg-[#131F22] border border-[#1E3338] flex items-center justify-between gap-2">
+          <div>
+            <p class="text-xs font-bold text-white flex items-center space-x-1.5">
+              <i data-lucide="watch" class="w-4 h-4 text-[#5EEAD4]"></i>
+              <span>Sensor Biométrico do Relógio</span>
+            </p>
+            <p id="sos-wrist-status" class="text-[11px] text-[#B8F04A] font-semibold mt-0.5">● No Pulso (82 bpm · Contacto pele OK)</p>
+          </div>
+          <button type="button" id="sos-wrist-toggle" onclick="toggleWristSensor()" class="px-3 py-1.5 rounded-full bg-[#14261F] text-[#B8F04A] border border-[#B8F04A]/40 text-[11px] font-bold transition shrink-0">
+            Tirar do Pulso
+          </button>
+        </div>
+
+        <!-- Botão Principal SOS Hold 2s -->
+        <div class="p-4 rounded-2xl bg-[#131F22] border border-red-500/40 text-center space-y-3">
+          <button type="button" id="sos-hold-btn"
+            onpointerdown="startSosHold()" onpointerup="cancelSosHold()" onpointerleave="cancelSosHold()" onpointercancel="cancelSosHold()"
+            class="w-36 h-36 mx-auto rounded-full bg-gradient-to-br from-red-600 to-red-800 hover:from-red-500 hover:to-red-700 text-white font-black shadow-[0_0_25px_rgba(239,68,68,0.45)] active:scale-95 transition flex flex-col items-center justify-center select-none touch-none">
+            <i data-lucide="siren" class="w-8 h-8 mb-1"></i>
+            <span class="text-lg leading-none">SOS</span>
+            <span class="text-[10px] font-semibold opacity-90 mt-1">Manter 2 seg.</span>
+          </button>
+          <div class="w-full h-2 rounded-full bg-[#0C1416] border border-[#1E3338] overflow-hidden">
+            <div id="sos-hold-progress" class="h-full bg-red-500 transition-all duration-75" style="width: 0%"></div>
+          </div>
+          <div class="grid grid-cols-2 gap-2 pt-1">
+            <button type="button" onclick="simulateFallTrigger()" class="py-2 px-2 rounded-xl bg-[#162529] hover:bg-[#1E3338] text-[#E4ECE8] text-[11px] font-bold border border-[#1E3338] transition">
+              🤕 Simular Queda
+            </button>
+            <button type="button" onclick="triggerPreAlarm('triple_click', 'Triplo Clique (Suspeita AVC / Hemiparesia)')" class="py-2 px-2 rounded-xl bg-[#162529] hover:bg-[#1E3338] text-[#E4ECE8] text-[11px] font-bold border border-[#1E3338] transition">
+              🔘 Triplo Clique
+            </button>
+          </div>
+          <p id="sos-guard-msg" class="hidden text-[11px] text-amber-300 bg-[#2A2312] border border-amber-500/40 rounded-xl p-2 font-semibold"></p>
+        </div>
+
+        <!-- Janela de Pré-Alarme Local (15s) -->
+        <div id="sos-prealarm-card" class="hidden p-4 rounded-2xl bg-[#2A2312] border-2 border-amber-400 space-y-3 text-center">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-black uppercase tracking-wider text-amber-300">Pré-Alarme Local (Pulseira + Telemóvel)</span>
+            <span id="sos-countdown-badge" class="px-2 py-0.5 rounded-full bg-amber-500 text-black text-xs font-black font-mono">15s</span>
+          </div>
+          <p id="sos-prealarm-reason" class="text-xs font-bold text-white"></p>
+          <p class="text-[11px] text-amber-100">Se foi toque acidental, cancele agora antes de alertar vizinhos e o 112.</p>
+          <div class="grid grid-cols-2 gap-2">
+            <button type="button" onclick="cancelPreAlarm()" class="py-2.5 px-3 rounded-xl bg-[#B8F04A] text-[#0C1416] text-xs font-extrabold">✓ Estou bem / Cancelar</button>
+            <button type="button" onclick="escalateToLevel2()" class="py-2.5 px-3 rounded-xl bg-red-600 text-white text-xs font-extrabold">🚨 Alertar Já</button>
+          </div>
+        </div>
+
+        <!-- Nível 2 Ativo: Rede de Vizinhos + 112 + Sirene -->
+        <div id="sos-active-card" class="hidden p-4 rounded-2xl bg-red-950/90 border-2 border-red-500 space-y-2.5">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-black uppercase tracking-wider text-red-200">🚨 NÍVEL 2 ATIVO · SIRENE &amp; GPS</span>
+            <span class="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping"></span>
+          </div>
+          <p class="text-xs font-extrabold text-white">Rede de Vizinhos PULSO notificada (3 telemóveis num raio de 150m)</p>
+          <p id="sos-active-gps" class="text-[11px] font-mono text-red-100">GPS: 41.1780° N, 8.6080° W · Resumo IPS enviado</p>
+          <div class="grid grid-cols-2 gap-2 pt-1">
+            <a href="tel:112" class="py-2 px-3 rounded-xl bg-white text-red-700 text-xs font-black text-center">📞 Ligar 112</a>
+            <button type="button" onclick="stopEmergencyAlarm()" class="py-2 px-3 rounded-xl bg-red-800 text-white text-xs font-bold border border-red-400/40">Silenciar Sirene</button>
+          </div>
+        </div>
+      </div>
+
     </div>
 
     <!-- Barra Inferior de Navegação Móvel (Idêntica aos Ícones da Imagem) -->
@@ -395,6 +480,12 @@
           <span class="w-1.5 h-1.5 rounded-full bg-[#B8F04A] absolute -top-0.5 -right-0.5 shadow-[0_0_6px_#B8F04A]"></span>
         </div>
         <span class="text-[9px] mt-1 font-bold text-[#B8F04A]">Partilha</span>
+      </button>
+
+      <!-- Tab 4: SOS / Pulseira -->
+      <button onclick="switchMobileTab('sos')" id="mobile-tab-sos" class="mobile-nav-btn flex flex-col items-center text-red-400 hover:text-red-300 transition py-1">
+        <i data-lucide="siren" class="w-5 h-5"></i>
+        <span class="text-[9px] mt-1 font-bold">SOS</span>
       </button>
 
     </nav>
@@ -926,7 +1017,162 @@
       }
     }
 
+    // ======================== SOS PULSEIRA & REDE DE VIZINHOS ========================
+    let sosOnWrist = true;
+    let sosHoldTimer = null;
+    let sosHoldStart = 0;
+    let sosPreAlarmTimer = null;
+    let sosPreAlarmRemaining = 15;
+    let sosCurrentMode = 'manual_hold_2s';
+    let sosCurrentLabel = 'Botão SOS (2s)';
+    let sirenInterval = null;
+    let audioCtx = null;
+
+    function toggleWristSensor() {
+      sosOnWrist = !sosOnWrist;
+      const st = document.getElementById('sos-wrist-status');
+      const btn = document.getElementById('sos-wrist-toggle');
+      const guard = document.getElementById('sos-guard-msg');
+      if (guard) guard.classList.add('hidden');
+      if (sosOnWrist) {
+        st.innerText = '● No Pulso (82 bpm · Contacto pele OK)';
+        st.className = 'text-[11px] text-[#B8F04A] font-semibold mt-0.5';
+        btn.innerText = 'Tirar do Pulso';
+      } else {
+        st.innerText = '○ Fora do Pulso (Pousado / Sem leitura cardíaca)';
+        st.className = 'text-[11px] text-amber-300 font-semibold mt-0.5';
+        btn.innerText = 'Colocar no Pulso';
+      }
+    }
+
+    function startSosHold() {
+      cancelSosHold();
+      sosHoldStart = Date.now();
+      const bar = document.getElementById('sos-hold-progress');
+      sosHoldTimer = setInterval(() => {
+        const pct = Math.min(100, ((Date.now() - sosHoldStart) / 2000) * 100);
+        if (bar) bar.style.width = pct + '%';
+        if (pct >= 100) {
+          cancelSosHold();
+          triggerPreAlarm('manual_hold_2s', 'Botão SOS Pressionado (2s contínuos)');
+        }
+      }, 40);
+    }
+
+    function cancelSosHold() {
+      if (sosHoldTimer) {
+        clearInterval(sosHoldTimer);
+        sosHoldTimer = null;
+      }
+      const bar = document.getElementById('sos-hold-progress');
+      if (bar) bar.style.width = '0%';
+    }
+
+    function simulateFallTrigger() {
+      const guard = document.getElementById('sos-guard-msg');
+      if (!sosOnWrist) {
+        if (guard) {
+          guard.innerText = '🛡️ Queda ignorada: o relógio está FORA DO PULSO. Falso alarme evitado!';
+          guard.classList.remove('hidden');
+        }
+        return;
+      }
+      if (guard) guard.classList.add('hidden');
+      triggerPreAlarm('fall_on_wrist', 'Queda Brusca Detetada NO PULSO + Imobilidade');
+    }
+
+    function playEmergencySiren(highOnly) {
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        let toggle = false;
+        const beep = () => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.value = highOnly ? 740 : (toggle ? 880 : 660);
+          toggle = !toggle;
+          gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.35);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start();
+          osc.stop(audioCtx.currentTime + 0.36);
+        };
+        beep();
+        if (sirenInterval) clearInterval(sirenInterval);
+        sirenInterval = setInterval(beep, highOnly ? 900 : 450);
+      } catch (_) {}
+      if (navigator.vibrate) {
+        navigator.vibrate(highOnly ? [200, 200, 200] : [400, 150, 400, 150, 600]);
+      }
+    }
+
+    function stopEmergencyAlarm() {
+      if (sirenInterval) { clearInterval(sirenInterval); sirenInterval = null; }
+      if (navigator.vibrate) navigator.vibrate(0);
+      document.getElementById('sos-active-card')?.classList.add('hidden');
+    }
+
+    function triggerPreAlarm(mode, label) {
+      sosCurrentMode = mode;
+      sosCurrentLabel = label;
+      sosPreAlarmRemaining = 15;
+      document.getElementById('sos-active-card')?.classList.add('hidden');
+      const card = document.getElementById('sos-prealarm-card');
+      const reasonEl = document.getElementById('sos-prealarm-reason');
+      const badgeEl = document.getElementById('sos-countdown-badge');
+      if (reasonEl) reasonEl.innerText = label;
+      if (badgeEl) badgeEl.innerText = '15s';
+      if (card) card.classList.remove('hidden');
+      playEmergencySiren(true);
+
+      if (sosPreAlarmTimer) clearInterval(sosPreAlarmTimer);
+      sosPreAlarmTimer = setInterval(() => {
+        sosPreAlarmRemaining -= 1;
+        if (badgeEl) badgeEl.innerText = sosPreAlarmRemaining + 's';
+        if (sosPreAlarmRemaining <= 0) {
+          escalateToLevel2();
+        }
+      }, 1000);
+    }
+
+    function cancelPreAlarm() {
+      if (sosPreAlarmTimer) { clearInterval(sosPreAlarmTimer); sosPreAlarmTimer = null; }
+      stopEmergencyAlarm();
+      document.getElementById('sos-prealarm-card')?.classList.add('hidden');
+    }
+
+    async function escalateToLevel2() {
+      if (sosPreAlarmTimer) { clearInterval(sosPreAlarmTimer); sosPreAlarmTimer = null; }
+      document.getElementById('sos-prealarm-card')?.classList.add('hidden');
+      document.getElementById('sos-active-card')?.classList.remove('hidden');
+      playEmergencySiren(false);
+
+      const gpsText = '41.1780° N, 8.6080° W (Porto)';
+      const patientName = document.getElementById('mobile-patient-name')?.innerText || 'Sr. António Silva';
+      const payload = {
+        active: true,
+        mode: sosCurrentMode,
+        modeLabel: sosCurrentLabel,
+        onWrist: sosOnWrist,
+        gps: gpsText,
+        neighborsNotified: 3,
+        patientName,
+        title: `Emergência SOS · ${sosCurrentLabel}`,
+        timestamp: Date.now()
+      };
+      try { localStorage.setItem('pulso_emergency_broadcast', JSON.stringify(payload)); } catch (_) {}
+      try {
+        await PulsoAPI.triggerEmergency({ mode: sosCurrentMode, onWrist: sosOnWrist, gps: gpsText, neighborsNotified: 3, notes: sosCurrentLabel });
+        await syncMobileWithBackend();
+      } catch (_) {}
+    }
+
     window.addEventListener('DOMContentLoaded', async () => {
+      if (localStorage.getItem('pulso_theme') === 'light') {
+        document.documentElement.classList.add('light');
+      }
       switchMobileTab('share');
       try {
         let logged = false;

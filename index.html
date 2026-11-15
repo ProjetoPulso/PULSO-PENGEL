@@ -11,7 +11,7 @@
   <!-- Lucide Icons CDN -->
   <script src="https://unpkg.com/lucide@latest"></script>
   <!-- PULSO Unified API Client -->
-  <script src="pulso_app.js?v=3"></script>
+  <script src="pulso_app.js?v=4"></script>
   <script>
     tailwind.config = {
       darkMode: 'class',
@@ -79,25 +79,63 @@
     }
     html.light header, html.light nav, html.light footer {
       background: #FFFFFF !important;
-      border-color: #E2E8F0 !important;
+      border-color: #CBD5E1 !important;
     }
-    html.light .bg-\[\#131F22\], html.light .bg-\[\#0C1416\], html.light .bg-\[\#162529\], html.light .bg-\[\#090F11\]\/90, html.light .bg-\[\#181D1A\] {
+    html.light .bg-\[\#131F22\], html.light .bg-\[\#0C1416\], html.light .bg-\[\#162529\], html.light .bg-\[\#090F11\]\/90, html.light .bg-\[\#181D1A\], html.light .bg-\[\#0C1416\]\/60, html.light .bg-\[\#0C1416\]\/80, html.light .bg-\[\#131F22\]\/80 {
       background-color: #FFFFFF !important;
       color: #0F172A !important;
+    }
+    html.light .bg-\[\#14261F\], html.light .bg-\[\#14332D\] {
+      background-color: #ECFDF5 !important;
+      color: #065F46 !important;
+    }
+    html.light .bg-\[\#182326\], html.light .bg-\[\#1E293B\] {
+      background-color: #F1F5F9 !important;
+      color: #0F172A !important;
+    }
+    html.light .bg-\[\#2A1416\] {
+      background-color: #FEF2F2 !important;
+      color: #991B1B !important;
+    }
+    html.light .bg-\[\#2A2312\] {
+      background-color: #FFFBEB !important;
+      color: #92400E !important;
+    }
+    html.light [class*="bg-gradient-to-"] {
+      background-image: none !important;
+      background-color: #FFFFFF !important;
     }
     html.light .border-\[\#1E3338\], html.light .border-\[\#2A3E33\] {
       border-color: #CBD5E1 !important;
     }
-    html.light .text-white {
+    html.light .text-white, html.light .text-\[\#E4ECE8\], html.light .text-\[\#CBD5E1\] {
       color: #0F172A !important;
     }
-    html.light .text-\[\#8DA39E\], html.light .text-\[\#5F7571\] {
+    html.light .text-\[\#8DA39E\], html.light .text-\[\#5F7571\], html.light .text-\[\#94A3B8\] {
       color: #475569 !important;
     }
-    html.light .bg-\[\#B8F04A\], html.light .text-\[\#0C1416\] {
+    html.light .text-\[\#5EEAD4\] {
+      color: #0F766E !important;
+    }
+    html.light .text-red-200, html.light .text-red-300 {
+      color: #991B1B !important;
+    }
+    html.light .text-amber-200, html.light .text-amber-300 {
+      color: #92400E !important;
+    }
+    html.light .bg-\[\#B8F04A\], html.light .bg-\[\#B8F04A\] * {
       color: #0C1416 !important;
     }
     html.light .text-\[\#B8F04A\] {
+      color: #15803D !important;
+    }
+    html.light select, html.light select option, html.light input, html.light textarea {
+      background-color: #FFFFFF !important;
+      color: #0F172A !important;
+      border-color: #CBD5E1 !important;
+    }
+    html.light #experience-mode-select, html.light #experience-mode-select option {
+      background-color: #FFFFFF !important;
       color: #15803D !important;
     }
     /* Modos de Experiência (Simples / Equilibrado / Detalhado) */
@@ -147,14 +185,14 @@
       <div class="flex items-center space-x-3">
         
         <!-- Controlo de Experiência & Tema (sempre visível) -->
-        <div class="flex items-center space-x-1.5 bg-[#131F22] border border-[#1E3338] rounded-full px-2.5 py-1">
-          <select id="experience-mode-select" onchange="changeExperienceMode(this.value)" class="bg-transparent text-[11px] font-bold text-[#B8F04A] focus:outline-none cursor-pointer" title="Nível de detalhe da interface">
+        <div class="flex items-center bg-[#131F22] border border-[#1E3338] rounded-full overflow-hidden shadow-sm">
+          <select id="experience-mode-select" onchange="changeExperienceMode(this.value)" class="bg-transparent text-[11px] font-bold text-[#B8F04A] pl-3 pr-1.5 py-1.5 rounded-l-full focus:outline-none cursor-pointer" title="Nível de detalhe da interface">
             <option value="simple" class="bg-[#131F22] text-white">Simples</option>
             <option value="balanced" selected class="bg-[#131F22] text-white">Equilibrado</option>
             <option value="detailed" class="bg-[#131F22] text-white">Detalhado</option>
           </select>
-          <span class="text-[#1E3338]">|</span>
-          <button onclick="toggleTheme()" id="theme-toggle-btn" class="text-[11px] text-[#5EEAD4] hover:text-white px-1.5 py-0.5 rounded-full transition flex items-center space-x-1" title="Alternar Tema Claro/Escuro">
+          <span class="text-[#1E3338] select-none">|</span>
+          <button onclick="toggleTheme()" id="theme-toggle-btn" class="text-[11px] text-[#5EEAD4] hover:text-white pl-2 pr-3 py-1.5 rounded-r-full transition flex items-center space-x-1" title="Alternar Tema Claro/Escuro">
             <i data-lucide="sun-moon" class="w-3.5 h-3.5"></i>
             <span id="theme-label" class="hidden sm:inline">Escuro</span>
           </button>
@@ -369,6 +407,12 @@
             <span class="px-1.5 py-0.2 bg-[#1E293B] text-[#94A3B8] text-[9px] font-bold rounded-full border border-slate-700">IPS / UE</span>
           </button>
 
+          <button onclick="switchTab('connectors')" id="tab-connectors" class="tab-btn flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-semibold text-[#8DA39E] hover:text-white hover:bg-[#131F22] border border-transparent transition whitespace-nowrap">
+            <i data-lucide="plug-zap" class="w-4 h-4"></i>
+            <span>Ligações SNS & Hospitais</span>
+            <span class="px-1.5 py-0.2 bg-[#14332D] text-[#5EEAD4] text-[9px] font-bold rounded-full border border-[#5EEAD4]/30">PT API</span>
+          </button>
+
           <button onclick="switchTab('settings')" id="tab-settings" class="tab-btn flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-semibold text-[#8DA39E] hover:text-white hover:bg-[#131F22] border border-transparent transition whitespace-nowrap">
             <i data-lucide="settings" class="w-4 h-4"></i>
             <span>Configurações</span>
@@ -387,6 +431,29 @@
 
     <!-- Conteúdo Principal dos Registos do Doente -->
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full space-y-6">
+
+      <!-- BANNER DE EMERGÊNCIA MÉDICA / REDE DE VIZINHOS PULSO -->
+      <div id="live-emergency-banner" class="hidden bg-red-950/90 border-2 border-red-500 rounded-3xl p-5 shadow-[0_0_30px_rgba(239,68,68,0.45)] animate-pulse">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div class="flex items-start space-x-3">
+            <div class="w-11 h-11 rounded-2xl bg-red-600 flex items-center justify-center text-white shrink-0">
+              <i data-lucide="siren" class="w-6 h-6"></i>
+            </div>
+            <div>
+              <div class="flex items-center space-x-2">
+                <span class="px-2 py-0.5 rounded-full bg-red-600 text-white text-[10px] font-black uppercase tracking-wider">EMERGÊNCIA ATIVA · NÍVEL 2</span>
+                <span id="live-emg-time" class="text-[11px] text-red-200 font-mono"></span>
+              </div>
+              <h3 id="live-emg-title" class="text-base font-extrabold text-white mt-1">Alerta SOS Recebido (Pulseira / Telemóvel)</h3>
+              <p id="live-emg-details" class="text-xs text-red-100 mt-0.5"></p>
+            </div>
+          </div>
+          <div class="flex items-center space-x-2 shrink-0">
+            <a href="tel:112" class="px-4 py-2 rounded-xl bg-white text-red-700 font-extrabold text-xs hover:bg-red-50 transition">📞 Ligar 112</a>
+            <button type="button" onclick="dismissEmergencyBanner()" class="px-3 py-2 rounded-xl bg-red-800/80 hover:bg-red-700 text-white text-xs font-bold border border-red-400/40 transition">Silenciar / Reconhecer</button>
+          </div>
+        </div>
+      </div>
 
       <!-- BANNER DE SESSÃO MÉDICA ATIVA (DESBLOQUEADA COM CÓDIGO DE 8 DÍGITOS) -->
       <div id="doctor-session-banner" class="bg-gradient-to-r from-[#14261F] via-[#162529] to-[#0C1416] border-2 border-[#B8F04A] rounded-3xl p-5 shadow-[0_0_30px_rgba(184,240,74,0.25)] flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -1345,9 +1412,9 @@
             <div class="space-y-2">
               <span class="text-xs font-bold text-white block">Nível de Detalhe (Simples / Equilibrado / Detalhado)</span>
               <div class="grid grid-cols-3 gap-2">
-                <button type="button" onclick="changeExperienceMode('simple')" id="btn-mode-simple" class="py-2 px-3 rounded-xl text-xs font-bold border border-[#1E3338] bg-[#0C1416] text-[#8DA39E] hover:text-white transition">Simples</button>
-                <button type="button" onclick="changeExperienceMode('balanced')" id="btn-mode-balanced" class="py-2 px-3 rounded-xl text-xs font-bold border border-[#1E3338] bg-[#B8F04A] text-[#0C1416] transition">Equilibrado</button>
-                <button type="button" onclick="changeExperienceMode('detailed')" id="btn-mode-detailed" class="py-2 px-3 rounded-xl text-xs font-bold border border-[#1E3338] bg-[#0C1416] text-[#8DA39E] hover:text-white transition">Detalhado</button>
+                <button type="button" onclick="changeExperienceMode('simple')" id="btn-mode-simple" class="py-2 px-3 rounded-full text-xs font-bold border border-[#1E3338] bg-[#0C1416] text-[#8DA39E] hover:text-white transition">Simples</button>
+                <button type="button" onclick="changeExperienceMode('balanced')" id="btn-mode-balanced" class="py-2 px-3 rounded-full text-xs font-bold border border-[#1E3338] bg-[#B8F04A] text-[#0C1416] transition">Equilibrado</button>
+                <button type="button" onclick="changeExperienceMode('detailed')" id="btn-mode-detailed" class="py-2 px-3 rounded-full text-xs font-bold border border-[#1E3338] bg-[#0C1416] text-[#8DA39E] hover:text-white transition">Detalhado</button>
               </div>
               <p id="cfg-mode-desc" class="text-[11px] text-[#8DA39E]">Equilibrado: mostra gráficos, filtros, medições, eventos e biblioteca educativa.</p>
             </div>
@@ -1397,6 +1464,32 @@
             <div id="cfg-audit-list" class="space-y-2 max-h-56 overflow-y-auto text-xs"></div>
           </div>
 
+        </div>
+      </div>
+
+      <!-- ========================================================================= -->
+      <!-- VISTA 8: LIGAÇÕES API PORTUGAL (SNS 24, HOSPITAIS PRIVADOS & LABS)        -->
+      <!-- ========================================================================= -->
+      <div id="view-connectors" class="view-panel hidden space-y-6">
+        <div class="bg-[#131F22] rounded-3xl border border-[#1E3338] p-6 shadow-xl">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#1E3338] pb-4 mb-5">
+            <div>
+              <span class="px-2.5 py-0.5 rounded-full bg-[#14332D] text-[#5EEAD4] text-[10px] font-bold border border-[#5EEAD4]/30 uppercase tracking-wider">Interoperabilidade HL7 FHIR · Portugal</span>
+              <h2 class="text-lg font-extrabold text-white mt-1.5 flex items-center space-x-2">
+                <i data-lucide="plug-zap" class="w-5 h-5 text-[#B8F04A]"></i>
+                <span>Ligações API — SNS, Hospitais Privados &amp; Laboratórios</span>
+              </h2>
+              <p class="text-xs text-[#8DA39E] mt-1">Autorize e sincronize automaticamente análises, exames de imagem e relatórios clínicos das suas entidades de saúde em Portugal.</p>
+            </div>
+            <div class="flex items-center space-x-2 shrink-0">
+              <button type="button" onclick="syncAllConnectedProviders()" class="px-4 py-2 rounded-full bg-[#B8F04A] hover:bg-[#a6de3b] text-[#0C1416] text-xs font-extrabold transition shadow-[0_0_15px_rgba(184,240,74,0.25)]">
+                ↻ Sincronizar Ligados
+              </button>
+            </div>
+          </div>
+
+          <div id="connectors-feedback" class="hidden mb-4 px-4 py-2.5 rounded-xl bg-[#14261F] border border-[#B8F04A]/40 text-xs text-[#E4ECE8] font-semibold"></div>
+          <div id="connectors-grid" class="space-y-6"></div>
         </div>
       </div>
 
@@ -1792,6 +1885,8 @@
 
       if (tabId === 'dashboard') {
         renderChart();
+      } else if (tabId === 'connectors') {
+        loadConnectors();
       } else if (tabId === 'settings') {
         populateSettingsView();
       }
@@ -2752,10 +2847,153 @@
       else switchTab('learning');
     }
 
+    // ======================== LIGAÇÕES API PORTUGAL (SNS, HOSPITAIS & LABS) ========================
+    let connectorsCache = [];
+
+    function showConnectorsFeedback(msg) {
+      const box = document.getElementById('connectors-feedback');
+      if (!box) return;
+      box.innerText = msg;
+      box.classList.remove('hidden');
+      setTimeout(() => box.classList.add('hidden'), 5000);
+    }
+
+    async function loadConnectors() {
+      if (!window.PulsoAPI) return;
+      try {
+        const res = await window.PulsoAPI.listConnectors();
+        connectorsCache = res.connectors || [];
+        renderConnectors();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function renderConnectors() {
+      const grid = document.getElementById('connectors-grid');
+      if (!grid) return;
+      const groups = ['SNS Público', 'Hospital Privado', 'Laboratório Clínico'];
+      const groupIcons = { 'SNS Público': 'landmark', 'Hospital Privado': 'hospital', 'Laboratório Clínico': 'flask-conical' };
+      grid.innerHTML = groups.map(grp => {
+        const items = connectorsCache.filter(c => c.group === grp);
+        if (!items.length) return '';
+        return `
+          <div class="space-y-3">
+            <h3 class="text-xs font-extrabold uppercase tracking-wider text-[#5EEAD4] flex items-center space-x-2">
+              <i data-lucide="${groupIcons[grp] || 'plug'}" class="w-4 h-4"></i>
+              <span>${grp} (${items.length})</span>
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              ${items.map(c => {
+                const syncDate = c.lastSync ? new Date(c.lastSync * 1000).toLocaleString('pt-PT') : 'Ainda não sincronizado';
+                return `
+                  <div class="bg-[#0C1416] border ${c.connected ? 'border-[#B8F04A]/50' : 'border-[#1E3338]'} rounded-2xl p-4 flex flex-col justify-between space-y-3">
+                    <div class="space-y-1.5">
+                      <div class="flex items-center justify-between gap-2">
+                        <span class="text-sm font-extrabold text-white">${c.name}</span>
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${c.connected ? 'bg-[#14261F] text-[#B8F04A] border border-[#B8F04A]/40' : 'bg-[#182326] text-[#8DA39E] border border-[#1E3338]'}">
+                          ${c.connected ? '● Ligado' : '○ Desligado'}
+                        </span>
+                      </div>
+                      <p class="text-[10px] font-mono text-[#5EEAD4]">${c.protocol}</p>
+                      <p class="text-xs text-[#8DA39E] leading-relaxed">${c.description}</p>
+                      <p class="text-[10px] text-[#5F7571]">Última sinc.: ${syncDate}</p>
+                    </div>
+                    <div class="flex items-center space-x-2 pt-2 border-t border-[#1E3338]">
+                      <button type="button" onclick="toggleConnector('${c.id}', ${!c.connected})" class="flex-1 py-1.5 px-3 rounded-full text-xs font-bold border ${c.connected ? 'border-red-500/40 bg-[#2A1416] text-red-200 hover:bg-red-900/50' : 'border-[#1E3338] bg-[#131F22] text-white hover:border-[#B8F04A]'} transition">
+                        ${c.connected ? 'Desligar' : 'Autorizar / Ligar'}
+                      </button>
+                      <button type="button" onclick="syncConnector('${c.id}')" class="flex-1 py-1.5 px-3 rounded-full text-xs font-extrabold bg-[#B8F04A] hover:bg-[#a6de3b] text-[#0C1416] transition">
+                        ↻ Sincronizar
+                      </button>
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        `;
+      }).join('');
+      if (window.lucide) lucide.createIcons();
+    }
+
+    async function toggleConnector(provider, nextState) {
+      try {
+        await window.PulsoAPI.toggleConnector(provider, nextState);
+        await loadConnectors();
+        showConnectorsFeedback(nextState ? `Ligação a ${provider.toUpperCase()} autorizada com sucesso.` : `Ligação a ${provider.toUpperCase()} desligada.`);
+      } catch (err) {
+        alert(err.message || 'Erro ao atualizar conector.');
+      }
+    }
+
+    async function syncConnector(provider) {
+      try {
+        const res = await window.PulsoAPI.syncConnector(provider);
+        await loadConnectors();
+        if (typeof refreshWorkspaceRecords === 'function') await refreshWorkspaceRecords();
+        showConnectorsFeedback(res.imported > 0
+          ? `✅ Sincronização concluída (${provider.toUpperCase()}): ${res.imported} novo exame integrado no Histórico!`
+          : `ℹ️ Sincronização concluída (${provider.toUpperCase()}): todos os exames já estavam no Histórico.`);
+      } catch (err) {
+        alert(err.message || 'Erro ao sincronizar entidade.');
+      }
+    }
+
+    async function syncAllConnectedProviders() {
+      const linked = connectorsCache.filter(c => c.connected);
+      if (!linked.length) {
+        showConnectorsFeedback('Ligue primeiro pelo menos uma entidade de saúde.');
+        return;
+      }
+      let totalImported = 0;
+      for (const c of linked) {
+        const res = await window.PulsoAPI.syncConnector(c.id);
+        totalImported += res.imported || 0;
+      }
+      await loadConnectors();
+      if (typeof refreshWorkspaceRecords === 'function') await refreshWorkspaceRecords();
+      showConnectorsFeedback(`✅ Sincronização global concluída (${linked.length} entidades): ${totalImported} novo(s) exame(s) importado(s).`);
+    }
+
+    // ======================== ESCUTA DE EMERGÊNCIA (PULSEIRA / VIZINHOS) ========================
+    function handleEmergencyBroadcast(payload) {
+      if (!payload || !payload.active) return;
+      const banner = document.getElementById('live-emergency-banner');
+      if (!banner) return;
+      document.getElementById('live-emg-title').innerText = `🚨 ${payload.title || 'Emergência Médica Ativada'} — ${payload.patientName || 'Utente PULSO'}`;
+      document.getElementById('live-emg-details').innerText = `Modo: ${payload.modeLabel || payload.mode} · GPS: ${payload.gps || 'Porto'} · ${payload.neighborsNotified || 3} vizinhos alertados · IPS enviado ao 112.`;
+      document.getElementById('live-emg-time').innerText = new Date(payload.timestamp || Date.now()).toLocaleTimeString('pt-PT');
+      banner.classList.remove('hidden');
+      if (window.lucide) lucide.createIcons();
+      if (typeof refreshWorkspaceRecords === 'function') refreshWorkspaceRecords();
+    }
+
+    function dismissEmergencyBanner() {
+      const banner = document.getElementById('live-emergency-banner');
+      if (banner) banner.classList.add('hidden');
+      try { localStorage.removeItem('pulso_emergency_broadcast'); } catch (_) {}
+    }
+
+    window.addEventListener('storage', (ev) => {
+      if (ev.key === 'pulso_emergency_broadcast' && ev.newValue) {
+        try { handleEmergencyBroadcast(JSON.parse(ev.newValue)); } catch (_) {}
+      }
+    });
+
     // Inicialização ao carregar
     window.addEventListener('DOMContentLoaded', async () => {
       updateDetectedMobileCode();
       changeLanguage('en');
+      try {
+        const rawEmg = localStorage.getItem('pulso_emergency_broadcast');
+        if (rawEmg) {
+          const parsed = JSON.parse(rawEmg);
+          if (parsed?.active && Date.now() - (parsed.timestamp || 0) < 300000) {
+            handleEmergencyBroadcast(parsed);
+          }
+        }
+      } catch (_) {}
       if (window.PulsoAPI && window.PulsoAPI.getToken()) {
         try {
           const session = await window.PulsoAPI.me();

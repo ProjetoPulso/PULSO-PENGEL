@@ -431,5 +431,317 @@
       const staticRes = await fetch("./server/shared/laboratorio-demo.pdf");
       return staticRes.blob();
     },
+    listConnectors: () =>
+      withFallback(
+        () => apiFetch("/api/connectors"),
+        () => {
+          const s = getStaticSession();
+          const store = getStaticStore();
+          const pat = staticFindPatient(store, s?.patientId);
+          const links = pat.connectorLinks || {};
+          return {
+            connectors: STATIC_PT_CONNECTORS.map((c) => {
+              const st = links[c.id] || { connected: c.id === "sns24", lastSync: null };
+              return Object.assign({}, c, { connected: !!st.connected, lastSync: st.lastSync || null });
+            }),
+          };
+        }
+      ),
+    toggleConnector: (provider, connected) =>
+      withFallback(
+        () => apiFetch(`/api/connectors/${encodeURIComponent(provider)}/connect`, { method: "POST", body: JSON.stringify({ connected: !!connected }) }),
+        () => {
+          const s = getStaticSession();
+          const store = getStaticStore();
+          const pat = staticFindPatient(store, s?.patientId);
+          const conn = STATIC_PT_CONNECTORS.find((c) => c.id === provider);
+          if (!conn) throw new Error("Conector desconhecido.");
+          pat.connectorLinks = pat.connectorLinks || {};
+          const prev = pat.connectorLinks[provider] || {};
+          pat.connectorLinks[provider] = { connected: !!connected, lastSync: prev.lastSync || null };
+          pat.auditLogs = pat.auditLogs || [];
+          pat.auditLogs.unshift({
+            action: connected ? "CONNECTOR_LINKED" : "CONNECTOR_UNLINKED",
+            actorRole: s?.role || "patient",
+            actorName: pat.displayName,
+            details: `Conector ${conn.name} (${conn.protocol}) ${connected ? "associado" : "desligado"}.`,
+            createdAt: Math.floor(Date.now() / 1000),
+          });
+          saveStaticStore(store);
+          return { ok: true, provider, connected: !!connected };
+        }
+      ),
+    syncConnector: (provider) =>
+      withFallback(
+        () => apiFetch(`/api/connectors/${encodeURIComponent(provider)}/sync`, { method: "POST" }),
+        () => {
+          const s = getStaticSession();
+          const store = getStaticStore();
+          const pat = staticFindPatient(store, s?.patientId);
+          const conn = STATIC_PT_CONNECTORS.find((c) => c.id === provider);
+          if (!conn) throw new Error("Conector desconhecido.");
+          const now = Date.now() / 1000;
+          pat.connectorLinks = pat.connectorLinks || {};
+          pat.connectorLinks[provider] = { connected: true, lastSync: now };
+          const exId = `conn-${pat.id || "pat"}-${conn.sampleExam.externalId}`;
+          pat.exams = pat.exams || [];
+          let imported = 0;
+          if (!pat.exams.some((e) => e.id === exId)) {
+            pat.exams.unshift({
+              id: exId,
+              title: conn.sampleExam.title,
+              category: conn.sampleExam.category,
+              examType: conn.sampleExam.examType,
+              specialty: conn.sampleExam.specialty,
+              issuer: conn.sampleExam.issuer,
+              examDate: conn.sampleExam.examDate,
+              summary: conn.sampleExam.summary,
+              extractedValues: conn.sampleExam.extractedValues,
+              addedByRole: s?.role || "patient",
+              addedByName: `API ${conn.name}`,
+              createdAt: now,
+            });
+            imported = 1;
+          }
+          pat.auditLogs = pat.auditLogs || [];
+          pat.auditLogs.unshift({
+            action: "CONNECTOR_SYNC",
+            actorRole: s?.role || "patient",
+            actorName: pat.displayName,
+            details: `Sincronização ${conn.name} (${conn.protocol}): ${imported} novo(s) registo(s).`,
+            createdAt: Math.floor(now),
+          });
+          saveStaticStore(store);
+          return { ok: true, provider, imported, examId: exId, lastSync: now };
+        }
+      ),
+    triggerEmergency: (data) =>
+      withFallback(
+        () => apiFetch("/api/emergency/trigger", { method: "POST", body: JSON.stringify(data || {}) }),
+        () => {
+          const s = getStaticSession();
+          const store = getStaticStore();
+          const pat = staticFindPatient(store, s?.patientId);
+          const now = Date.now() / 1000;
+          const evid = "emg-" + Math.random().toString(36).slice(2, 10);
+          const mode = (data && data.mode) || "manual_hold_2s";
+          const neighbors = (data && data.neighborsNotified) || 3;
+          const gps = (data && data.gps) || "41.1780° N, 8.6080° W (Porto)";
+          const details = `Pulso=${data && data.onWrist !== false} · GPS=${gps} · Vizinhos=${neighbors} · ${(data && data.notes) || "Acionamento de emergência médica"}`;
+          pat.events = pat.events || [];
+          pat.events.unshift({
+            id: evid,
+            title: `ALERTA SOS (${mode}) · 112 & ${neighbors} Vizinhos`,
+            eventType: "urgent",
+            startDate: new Date().toISOString().slice(0, 10),
+            endDate: null,
+            notes: details,
+            addedByRole: s?.role || "patient",
+            addedByName: pat.displayName,
+            createdAt: now,
+          });
+          pat.auditLogs = pat.auditLogs || [];
+          pat.auditLogs.unshift({
+            action: "EMERGENCY_SOS_TRIGGERED",
+            actorRole: s?.role || "patient",
+            actorName: pat.displayName,
+            details,
+            createdAt: Math.floor(now),
+          });
+          saveStaticStore(store);
+          return { ok: true, id: evid, gps, neighborsNotified: neighbors, timestamp: now };
+        }
+      ),
   };
+
+  const STATIC_PT_CONNECTORS = [
+    {
+      id: "sns24",
+      name: "SNS 24 / SPMS (RSE)",
+      group: "SNS Público",
+      protocol: "HL7 FHIR R4 · RSE/PDS",
+      description: "Registo de Saúde Eletrónico, prescrições eletrónicas, boletim de vacinas e altas hospitalares do SNS.",
+      sampleExam: {
+        externalId: "sns24-rse-2026-01",
+        title: "Painel Metabólico & HbA1c — USF São João (SNS 24)",
+        category: "blood_tests",
+        examType: "Análises Clínicas SNS",
+        specialty: "Medicina Geral e Familiar",
+        issuer: "SNS / SPMS — USF São João",
+        examDate: "2026-10-18",
+        summary: "Sincronizado automaticamente via RSE/SNS 24. Controlo glicémico estável.",
+        extractedValues: [
+          { name: "Hemoglobina Glicada (HbA1c)", value: 6.1, unit: "%", referenceRange: "< 6.5" },
+          { name: "Glicose em Jejum", value: 98, unit: "mg/dL", referenceRange: "70 - 100" },
+          { name: "Potássio", value: 4.3, unit: "mmol/L", referenceRange: "3.5 - 5.1" },
+        ],
+      },
+    },
+    {
+      id: "cuf",
+      name: "CUF / MyCUF",
+      group: "Hospital Privado",
+      protocol: "FHIR R4 / OAuth2 MyCUF",
+      description: "Relatórios de consulta, cardiologia, imagiologia e análises clínicas da rede CUF.",
+      sampleExam: {
+        externalId: "cuf-cardio-2026-02",
+        title: "Prova de Esforço & ECG — Hospital CUF Porto",
+        category: "cardiology",
+        examType: "Electrocardiograma / Prova de Esforço",
+        specialty: "Cardiologia",
+        issuer: "Hospital CUF Porto",
+        examDate: "2026-10-22",
+        summary: "Sincronizado via MyCUF API. Sem alterações isquémicas durante esforço submáximo.",
+        extractedValues: [
+          { name: "FC Máxima Atingida", value: 142, unit: "bpm", referenceRange: "120 - 160" },
+          { name: "Pressão Arterial Pico", value: 158, unit: "mmHg", referenceRange: "< 190" },
+        ],
+      },
+    },
+    {
+      id: "luz",
+      name: "Hospital da Luz / MY LUZ",
+      group: "Hospital Privado",
+      protocol: "FHIR R4 / Portal MY LUZ",
+      description: "Episódios de urgência, relatórios médicos, exames de imagem e prescrições Luz Saúde.",
+      sampleExam: {
+        externalId: "luz-img-2026-03",
+        title: "TAC Torácica Baixa Dose — Hospital da Luz Arrábida",
+        category: "imaging",
+        examType: "Tomografia Computorizada",
+        specialty: "Imagiologia",
+        issuer: "Hospital da Luz Arrábida",
+        examDate: "2026-10-29",
+        summary: "Sincronizado via MY LUZ. Parênquima pulmonar sem lesões focais agudas.",
+        extractedValues: [
+          { name: "Índice Cálcio Coronário", value: 42, unit: "Agatston", referenceRange: "< 100" },
+        ],
+      },
+    },
+    {
+      id: "lusiadas",
+      name: "Lusíadas Saúde / +Lusíadas",
+      group: "Hospital Privado",
+      protocol: "HL7 FHIR / +Lusíadas",
+      description: "Notas de alta, análises e relatórios de especialidades da rede Lusíadas.",
+      sampleExam: {
+        externalId: "lusiadas-neuro-2026-04",
+        title: "Eco-Doppler Carotídeo — Hospital Lusíadas Porto",
+        category: "imaging",
+        examType: "Eco-Doppler Vascular",
+        specialty: "Neurologia / Angiologia",
+        issuer: "Hospital Lusíadas Porto",
+        examDate: "2026-11-02",
+        summary: "Sincronizado via +Lusíadas. Fluxo carotídeo bilateral preservado, sem estenose significativa.",
+        extractedValues: [
+          { name: "Estenose Carotídea", value: 12, unit: "%", referenceRange: "< 50" },
+        ],
+      },
+    },
+    {
+      id: "trofa",
+      name: "Trofa Saúde",
+      group: "Hospital Privado",
+      protocol: "FHIR R4 / Portal Trofa Saúde",
+      description: "Resultados laboratoriais, imagiologia e consultas externas na rede Trofa Saúde.",
+      sampleExam: {
+        externalId: "trofa-pulmo-2026-05",
+        title: "Espirometria Basal — Trofa Saúde Alfena",
+        category: "clinical_notes",
+        examType: "Provas Funcionais Respiratórias",
+        specialty: "Pneumologia",
+        issuer: "Hospital Trofa Saúde Alfena",
+        examDate: "2026-11-04",
+        summary: "Sincronizado via Trofa Saúde API. Padrão ventilatório dentro dos parâmetros normais.",
+        extractedValues: [
+          { name: "FEV1 (% previsto)", value: 94, unit: "%", referenceRange: ">= 80" },
+        ],
+      },
+    },
+    {
+      id: "unilabs",
+      name: "Unilabs Portugal",
+      group: "Laboratório Clínico",
+      protocol: "HL7 / LOINC · Unilabs Connect",
+      description: "Importação direta de análises clínicas, bioquímica, perfil lipídico e anatomia patológica.",
+      sampleExam: {
+        externalId: "unilabs-lip-2026-06",
+        title: "Perfil Lipídico & Função Renal — Unilabs Portugal",
+        category: "blood_tests",
+        examType: "Bioquímica Sanguínea",
+        specialty: "Patologia Clínica",
+        issuer: "Unilabs Portugal",
+        examDate: "2026-11-07",
+        summary: "Sincronizado via Unilabs Connect (LOINC). Função renal estável; LDL controlado.",
+        extractedValues: [
+          { name: "Colesterol LDL", value: 88, unit: "mg/dL", referenceRange: "< 115" },
+          { name: "Creatinina", value: 0.96, unit: "mg/dL", referenceRange: "0.70 - 1.20" },
+          { name: "eGFR", value: 84, unit: "mL/min", referenceRange: ">= 60" },
+        ],
+      },
+    },
+    {
+      id: "germano",
+      name: "Germano de Sousa",
+      group: "Laboratório Clínico",
+      protocol: "FHIR Observation / LOINC",
+      description: "Análises clínicas, hematologia, marcadores tiroideus e serologias do Centro de Medicina Laboratorial.",
+      sampleExam: {
+        externalId: "germano-tir-2026-07",
+        title: "Hemograma & Função Tiroideia — Germano de Sousa",
+        category: "blood_tests",
+        examType: "Hematologia & Endocrinologia",
+        specialty: "Patologia Clínica",
+        issuer: "Centro de Medicina Laboratorial Germano de Sousa",
+        examDate: "2026-11-09",
+        summary: "Sincronizado via API Germano de Sousa. Hemoglobina e TSH em valores de referência.",
+        extractedValues: [
+          { name: "Hemoglobina", value: 14.3, unit: "g/dL", referenceRange: "13.0 - 17.5" },
+          { name: "TSH", value: 2.1, unit: "mUI/L", referenceRange: "0.4 - 4.0" },
+        ],
+      },
+    },
+    {
+      id: "jcs",
+      name: "Joaquim Chaves Saúde",
+      group: "Laboratório Clínico",
+      protocol: "FHIR / Portal JCS",
+      description: "Resultados laboratoriais e cardiologia diagnóstica da rede Joaquim Chaves Saúde.",
+      sampleExam: {
+        externalId: "jcs-vit-2026-08",
+        title: "Vitamina D & Ferritina — Joaquim Chaves Saúde",
+        category: "blood_tests",
+        examType: "Bioquímica & Vitaminas",
+        specialty: "Patologia Clínica",
+        issuer: "Joaquim Chaves Saúde",
+        examDate: "2026-11-11",
+        summary: "Sincronizado via Portal JCS. Reservas de ferro e vitamina D adequadas.",
+        extractedValues: [
+          { name: "25-OH Vitamina D", value: 36, unit: "ng/mL", referenceRange: "30 - 100" },
+          { name: "Ferritina", value: 112, unit: "ng/mL", referenceRange: "30 - 300" },
+        ],
+      },
+    },
+    {
+      id: "synlab",
+      name: "Synlab Portugal",
+      group: "Laboratório Clínico",
+      protocol: "HL7 FHIR / Synlab Direct",
+      description: "Análises clínicas, imunologia e testes preventivos da rede Synlab Portugal.",
+      sampleExam: {
+        externalId: "synlab-hep-2026-09",
+        title: "Painel Hepático & Proteína C Reativa — Synlab Portugal",
+        category: "blood_tests",
+        examType: "Bioquímica Hepática",
+        specialty: "Patologia Clínica",
+        issuer: "Synlab Portugal",
+        examDate: "2026-11-12",
+        summary: "Sincronizado via Synlab Direct. Transaminases normais e PCR sem atividade inflamatória.",
+        extractedValues: [
+          { name: "PCR (Proteína C Reativa)", value: 1.8, unit: "mg/L", referenceRange: "< 5.0" },
+          { name: "ALT (TGP)", value: 24, unit: "U/L", referenceRange: "< 41" },
+        ],
+      },
+    },
+  ];
 })();

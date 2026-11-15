@@ -180,3 +180,47 @@ def test_pdf_extraction_exam_crud_and_events():
         assert pref.status_code == 200
         assert pref.json()["preferences"]["textSize"] == "xlarge"
         assert pref.json()["preferences"]["mode"] == "simple"
+
+
+def test_portugal_connectors_and_emergency_sos():
+    with TestClient(app) as client:
+        client.post("/api/auth/login/patient", json={
+            "snsNumber": "234891024",
+            "password": "pulso1234"
+        })
+
+        # List 9 Portuguese healthcare connectors
+        res = client.get("/api/connectors")
+        assert res.status_code == 200
+        connectors = res.json()["connectors"]
+        ids = {c["id"] for c in connectors}
+        assert {"sns24", "cuf", "luz", "lusiadas", "trofa", "unilabs", "germano", "jcs", "synlab"}.issubset(ids)
+
+        # Toggle CUF connector
+        conn_res = client.post("/api/connectors/cuf/connect", json={"connected": True})
+        assert conn_res.status_code == 200
+        assert conn_res.json()["connected"] is True
+
+        # Sync SNS24 twice: first imports 1 exam, second deduplicates (0 imported)
+        sync1 = client.post("/api/connectors/sns24/sync")
+        assert sync1.status_code == 200
+        assert sync1.json()["imported"] == 1
+        sync2 = client.post("/api/connectors/sns24/sync")
+        assert sync2.status_code == 200
+        assert sync2.json()["imported"] == 0
+
+        # Trigger Emergency SOS
+        sos = client.post("/api/emergency/trigger", json={
+            "mode": "manual_hold_2s",
+            "onWrist": True,
+            "gps": "41.1780° N, 8.6080° W (Porto)",
+            "neighborsNotified": 3,
+            "notes": "Teste botão SOS 2s"
+        })
+        assert sos.status_code == 200
+        assert sos.json()["ok"] is True
+        assert sos.json()["neighborsNotified"] == 3
+
+        records = client.get("/api/records").json()
+        assert any("ALERTA SOS" in ev["title"] for ev in records["events"])
+        assert any(a["action"] == "EMERGENCY_SOS_TRIGGERED" for a in records["audit"])
