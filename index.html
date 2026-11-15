@@ -11,7 +11,7 @@
   <!-- Lucide Icons CDN -->
   <script src="https://unpkg.com/lucide@latest"></script>
   <!-- PULSO Unified API Client -->
-  <script src="pulso_app.js?v=2"></script>
+  <script src="pulso_app.js?v=3"></script>
   <script>
     tailwind.config = {
       darkMode: 'class',
@@ -2700,7 +2700,12 @@
       document.getElementById('ldm-cat').innerText = t.categoryLabel || t.category;
       document.getElementById('ldm-title').innerText = t.title;
       document.getElementById('ldm-summary').innerText = t.summary;
-      document.getElementById('ldm-why').innerText = t.whyItMatters ? '💡 Por que importa: ' + t.whyItMatters : '';
+      const whyEl = document.getElementById('ldm-why');
+      if (Array.isArray(t.sections) && t.sections.length) {
+        whyEl.innerHTML = t.sections.map(s => `<div class="mb-2 last:mb-0"><strong class="text-[#B8F04A] block">${s.title}</strong><span>${s.body}</span></div>`).join('');
+      } else {
+        whyEl.innerText = t.whyItMatters ? '💡 Por que importa: ' + t.whyItMatters : '';
+      }
       document.getElementById('learning-detail-modal').classList.remove('hidden');
     }
 
