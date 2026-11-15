@@ -381,13 +381,13 @@
       </div>
 
       <!-- ======================================================== -->
-      <!-- VISTA 4: SOS / PULSEIRA & REDE DE VIZINHOS               -->
+      <!-- VISTA 4: SOS / PULSEIRA & SOCORRISTAS DA COMUNIDADE      -->
       <!-- ======================================================== -->
       <div id="mobile-view-sos" class="mobile-view hidden space-y-3 pb-6">
         <div class="text-center space-y-1 pt-1">
           <span class="px-2.5 py-0.5 rounded-full bg-red-950/80 text-red-300 text-[10px] font-bold border border-red-500/40 uppercase tracking-wider">Smartwatch + Telemóvel · Anti-Falso Alarme</span>
           <h2 class="text-lg font-extrabold text-white tracking-tight">Emergência Médica (AVC / Cardíaco)</h2>
-          <p class="text-[11px] text-[#8DA39E]">Validação biométrica no pulso antes de alertar vizinhos próximos e o 112.</p>
+          <p class="text-[11px] text-[#8DA39E]">Validação biométrica no pulso antes de alertar socorristas da comunidade e o 112.</p>
         </div>
 
         <!-- Sensor No Pulso -->
@@ -420,8 +420,9 @@
             <button type="button" onclick="simulateFallTrigger()" class="py-2 px-2 rounded-xl bg-[#162529] hover:bg-[#1E3338] text-[#E4ECE8] text-[11px] font-bold border border-[#1E3338] transition">
               🤕 Simular Queda
             </button>
-            <button type="button" onclick="triggerPreAlarm('triple_click', 'Triplo Clique (Suspeita AVC / Hemiparesia)')" class="py-2 px-2 rounded-xl bg-[#162529] hover:bg-[#1E3338] text-[#E4ECE8] text-[11px] font-bold border border-[#1E3338] transition">
-              🔘 Triplo Clique
+            <button type="button" onclick="triggerPreAlarm('triple_click', 'Triplo Clique no Relógio (Suspeita AVC / Hemiparesia)')" class="py-2 px-2 rounded-xl bg-[#162529] hover:bg-[#1E3338] text-[#E4ECE8] text-[11px] font-bold border border-[#1E3338] transition flex flex-col items-center leading-tight">
+              <span>⌚ Triplo Clique (Relógio)</span>
+              <span class="text-[9px] text-[#5EEAD4] font-normal mt-0.5">Botão do smartwatch</span>
             </button>
           </div>
           <p id="sos-guard-msg" class="hidden text-[11px] text-amber-300 bg-[#2A2312] border border-amber-500/40 rounded-xl p-2 font-semibold"></p>
@@ -434,20 +435,20 @@
             <span id="sos-countdown-badge" class="px-2 py-0.5 rounded-full bg-amber-500 text-black text-xs font-black font-mono">15s</span>
           </div>
           <p id="sos-prealarm-reason" class="text-xs font-bold text-white"></p>
-          <p class="text-[11px] text-amber-100">Se foi toque acidental, cancele agora antes de alertar vizinhos e o 112.</p>
+          <p class="text-[11px] text-amber-100">Se foi toque acidental, cancele agora antes de alertar socorristas da comunidade e o 112.</p>
           <div class="grid grid-cols-2 gap-2">
             <button type="button" onclick="cancelPreAlarm()" class="py-2.5 px-3 rounded-xl bg-[#B8F04A] text-[#0C1416] text-xs font-extrabold">✓ Estou bem / Cancelar</button>
             <button type="button" onclick="escalateToLevel2()" class="py-2.5 px-3 rounded-xl bg-red-600 text-white text-xs font-extrabold">🚨 Alertar Já</button>
           </div>
         </div>
 
-        <!-- Nível 2 Ativo: Rede de Vizinhos + 112 + Sirene -->
+        <!-- Nível 2 Ativo: Rede de Socorristas da Comunidade + 112 + Sirene -->
         <div id="sos-active-card" class="hidden p-4 rounded-2xl bg-red-950/90 border-2 border-red-500 space-y-2.5">
           <div class="flex items-center justify-between">
             <span class="text-[10px] font-black uppercase tracking-wider text-red-200">🚨 NÍVEL 2 ATIVO · SIRENE &amp; GPS</span>
             <span class="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping"></span>
           </div>
-          <p class="text-xs font-extrabold text-white">Rede de Vizinhos PULSO notificada (3 telemóveis num raio de 150m)</p>
+          <p class="text-xs font-extrabold text-white">Rede de Socorristas da Comunidade PULSO notificada (3 telemóveis num raio de 150m)</p>
           <p id="sos-active-gps" class="text-[11px] font-mono text-red-100">GPS: 41.1780° N, 8.6080° W · Resumo IPS enviado</p>
           <div class="grid grid-cols-2 gap-2 pt-1">
             <a href="tel:112" class="py-2 px-3 rounded-xl bg-white text-red-700 text-xs font-black text-center">📞 Ligar 112</a>

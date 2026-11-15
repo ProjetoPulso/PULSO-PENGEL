@@ -760,6 +760,22 @@ class ConnectorConnectReq(BaseModel):
     connected: bool = True
 
 
+class ConnectorCredsReq(BaseModel):
+    apiKey: str = ""
+    clientId: str = ""
+    endpointUrl: str = ""
+
+
+class CustomConnectorReq(BaseModel):
+    name: str
+    group: str = "Laboratório Clínico"
+    protocol: str = "HL7 FHIR R4 / API Key"
+    endpointUrl: str = ""
+    apiKey: str = ""
+    clientId: str = ""
+    description: str = "Ligação API personalizada configurada pelo utente."
+
+
 class EmergencyTriggerReq(BaseModel):
     mode: str = "manual_hold_2s"
     onWrist: bool = True
@@ -775,15 +791,82 @@ def _ensure_connector_table(db) -> None:
                provider TEXT NOT NULL,
                connected INTEGER NOT NULL DEFAULT 0,
                last_sync REAL,
+               api_key TEXT DEFAULT '',
+               client_id TEXT DEFAULT '',
+               endpoint_url TEXT DEFAULT '',
                PRIMARY KEY (patient_id, provider)
+           )"""
+    )
+    # Migrar colunas caso tabela já exista de execução anterior
+    cols = {r[1] for r in db.execute("PRAGMA table_info(connector_links)").fetchall()}
+    for col in ("api_key", "client_id", "endpoint_url"):
+        if col not in cols:
+            db.execute(f"ALTER TABLE connector_links ADD COLUMN {col} TEXT DEFAULT ''")
+    db.execute(
+        """CREATE TABLE IF NOT EXISTS custom_connectors (
+               id TEXT NOT NULL,
+               patient_id TEXT NOT NULL,
+               name TEXT NOT NULL,
+               grp TEXT NOT NULL,
+               protocol TEXT NOT NULL,
+               description TEXT NOT NULL,
+               endpoint_url TEXT DEFAULT '',
+               created_at REAL NOT NULL,
+               PRIMARY KEY (patient_id, id)
            )"""
     )
 
 
-def _find_connector(provider: str) -> dict[str, Any]:
+def _mask_key(val: str) -> str:
+    v = (val or "").strip()
+    if not v:
+        return ""
+    if len(v) <= 4:
+        return "••••"
+    return "•" * min(12, len(v) - 4) + v[-4:]
+
+
+def _all_connectors_for_patient(db, patient_id: str) -> list[dict[str, Any]]:
+    custom_rows = db.execute(
+        "SELECT id, name, grp, protocol, description, endpoint_url FROM custom_connectors WHERE patient_id = ? ORDER BY created_at DESC",
+        (patient_id,),
+    ).fetchall()
+    customs = [
+        {
+            "id": r["id"],
+            "name": r["name"],
+            "group": r["grp"],
+            "protocol": r["protocol"],
+            "description": r["description"],
+            "endpointUrl": r["endpoint_url"] or "",
+            "custom": True,
+            "sampleExam": {
+                "externalId": f"{r['id']}-2026-01",
+                "title": f"Registo Clínico Sincronizado — {r['name']}",
+                "category": "blood_tests",
+                "examType": "Importação API",
+                "specialty": "Clínica Geral",
+                "issuer": r["name"],
+                "examDate": time.strftime("%Y-%m-%d"),
+                "summary": f"Sincronizado automaticamente via {r['protocol']}.",
+                "extractedValues": [
+                    {"name": "Estado da Ligação", "value": 100, "unit": "%", "referenceRange": "OK"}
+                ],
+            },
+        }
+        for r in custom_rows
+    ]
+    return [*PT_CONNECTORS, *customs]
+
+
+def _find_connector(provider: str, db=None, patient_id: Optional[str] = None) -> dict[str, Any]:
     for c in PT_CONNECTORS:
         if c["id"] == provider:
             return c
+    if db is not None and patient_id is not None:
+        for c in _all_connectors_for_patient(db, patient_id):
+            if c["id"] == provider:
+                return c
     raise HTTPException(404, "Conector de saúde desconhecido.")
 
 
@@ -793,23 +876,102 @@ def list_connectors(request: Request):
     with get_db(write=True) as db:
         _ensure_connector_table(db)
         rows = db.execute(
-            "SELECT provider, connected, last_sync FROM connector_links WHERE patient_id = ?",
+            "SELECT provider, connected, last_sync, api_key, client_id, endpoint_url FROM connector_links WHERE patient_id = ?",
             (sess["patient_id"],),
         ).fetchall()
-    state_map = {r["provider"]: {"connected": bool(r["connected"]), "lastSync": r["last_sync"]} for r in rows}
+        all_conns = _all_connectors_for_patient(db, sess["patient_id"])
+    state_map = {
+        r["provider"]: {
+            "connected": bool(r["connected"]),
+            "lastSync": r["last_sync"],
+            "hasApiKey": bool((r["api_key"] or "").strip()),
+            "apiKeyMasked": _mask_key(r["api_key"] or ""),
+            "clientId": r["client_id"] or "",
+            "endpointUrl": r["endpoint_url"] or "",
+        }
+        for r in rows
+    }
     items = []
-    for c in PT_CONNECTORS:
-        st = state_map.get(c["id"], {"connected": c["id"] == "sns24", "lastSync": None})
-        items.append({**c, "connected": st["connected"], "lastSync": st["lastSync"]})
+    for c in all_conns:
+        st = state_map.get(
+            c["id"],
+            {
+                "connected": c["id"] == "sns24",
+                "lastSync": None,
+                "hasApiKey": False,
+                "apiKeyMasked": "",
+                "clientId": "",
+                "endpointUrl": c.get("endpointUrl", ""),
+            },
+        )
+        items.append({**c, **st})
     return {"connectors": items}
+
+
+@app.post("/api/connectors")
+def create_custom_connector(body: CustomConnectorReq, request: Request):
+    sess = _get_session(request)
+    name = body.name.strip()
+    if len(name) < 2:
+        raise HTTPException(400, "Indique o nome da entidade ou API.")
+    cid = "custom-" + re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")[:20] + "-" + uuid.uuid4().hex[:4]
+    now = time.time()
+    with get_db(write=True) as db:
+        _ensure_connector_table(db)
+        db.execute(
+            """INSERT INTO custom_connectors(id, patient_id, name, grp, protocol, description, endpoint_url, created_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+            (cid, sess["patient_id"], name, body.group.strip() or "Clínica / Outro", body.protocol.strip() or "HL7 FHIR R4 / API Key", body.description.strip(), body.endpointUrl.strip(), now),
+        )
+        db.execute(
+            """INSERT INTO connector_links(patient_id, provider, connected, last_sync, api_key, client_id, endpoint_url)
+               VALUES (?, ?, ?, NULL, ?, ?, ?)""",
+            (sess["patient_id"], cid, 1 if body.apiKey.strip() else 0, body.apiKey.strip(), body.clientId.strip(), body.endpointUrl.strip()),
+        )
+        _record_audit(
+            db,
+            sess["patient_id"],
+            sess["role"],
+            sess["user"]["displayName"],
+            "CONNECTOR_CREATED",
+            f"Nova ligação API configurada: {name} ({body.protocol}).",
+        )
+    return {"ok": True, "id": cid, "name": name}
+
+
+@app.post("/api/connectors/{provider}/credentials")
+def save_connector_credentials(provider: str, body: ConnectorCredsReq, request: Request):
+    sess = _get_session(request)
+    with get_db(write=True) as db:
+        _ensure_connector_table(db)
+        conn = _find_connector(provider, db, sess["patient_id"])
+        db.execute(
+            """INSERT INTO connector_links(patient_id, provider, connected, last_sync, api_key, client_id, endpoint_url)
+               VALUES (?, ?, 1, NULL, ?, ?, ?)
+               ON CONFLICT(patient_id, provider) DO UPDATE SET
+                 api_key = excluded.api_key,
+                 client_id = excluded.client_id,
+                 endpoint_url = excluded.endpoint_url,
+                 connected = 1""",
+            (sess["patient_id"], provider, body.apiKey.strip(), body.clientId.strip(), body.endpointUrl.strip()),
+        )
+        _record_audit(
+            db,
+            sess["patient_id"],
+            sess["role"],
+            sess["user"]["displayName"],
+            "CONNECTOR_KEY_SAVED",
+            f"API Key / credenciais guardadas para {conn['name']}.",
+        )
+    return {"ok": True, "provider": provider, "hasApiKey": bool(body.apiKey.strip()), "apiKeyMasked": _mask_key(body.apiKey)}
 
 
 @app.post("/api/connectors/{provider}/connect")
 def toggle_connector(provider: str, body: ConnectorConnectReq, request: Request):
     sess = _get_session(request)
-    conn = _find_connector(provider)
     with get_db(write=True) as db:
         _ensure_connector_table(db)
+        conn = _find_connector(provider, db, sess["patient_id"])
         db.execute(
             """INSERT INTO connector_links(patient_id, provider, connected, last_sync)
                VALUES (?, ?, ?, NULL)
@@ -831,13 +993,13 @@ def toggle_connector(provider: str, body: ConnectorConnectReq, request: Request)
 @app.post("/api/connectors/{provider}/sync")
 def sync_connector(provider: str, request: Request):
     sess = _get_session(request)
-    conn = _find_connector(provider)
-    sample = conn["sampleExam"]
-    exam_id = f"conn-{sess['patient_id']}-{sample['externalId']}"
     now = time.time()
     imported = 0
     with get_db(write=True) as db:
         _ensure_connector_table(db)
+        conn = _find_connector(provider, db, sess["patient_id"])
+        sample = conn["sampleExam"]
+        exam_id = f"conn-{sess['patient_id']}-{sample['externalId']}"
         db.execute(
             """INSERT INTO connector_links(patient_id, provider, connected, last_sync)
                VALUES (?, ?, 1, ?)
@@ -887,10 +1049,10 @@ def trigger_emergency(body: EmergencyTriggerReq, request: Request):
     evid = f"emg-{uuid.uuid4().hex[:10]}"
     now = time.time()
     today = time.strftime("%Y-%m-%d")
-    title = f"ALERTA SOS ({body.mode}) · 112 & {body.neighborsNotified} Vizinhos"
+    title = f"ALERTA SOS ({body.mode}) · 112 & {body.neighborsNotified} Socorristas da Comunidade"
     details = (
         f"Pulso={body.onWrist} · GPS={body.gps or 'N/D'} · "
-        f"Vizinhos={body.neighborsNotified} · {body.notes.strip() or 'Acionamento de emergência médica'}"
+        f"Socorristas da Comunidade={body.neighborsNotified} · {body.notes.strip() or 'Acionamento de emergência médica'}"
     )
     with get_db(write=True) as db:
         db.execute(

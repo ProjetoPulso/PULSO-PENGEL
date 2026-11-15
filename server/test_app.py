@@ -196,10 +196,30 @@ def test_portugal_connectors_and_emergency_sos():
         ids = {c["id"] for c in connectors}
         assert {"sns24", "cuf", "luz", "lusiadas", "trofa", "unilabs", "germano", "jcs", "synlab"}.issubset(ids)
 
-        # Toggle CUF connector
+        # Toggle CUF connector & save API key credentials
         conn_res = client.post("/api/connectors/cuf/connect", json={"connected": True})
         assert conn_res.status_code == 200
         assert conn_res.json()["connected"] is True
+
+        cred_res = client.post("/api/connectors/cuf/credentials", json={
+            "apiKey": "sk_test_cuf_987654",
+            "clientId": "pulso-cuf",
+            "endpointUrl": "https://api.cuf.pt/fhir"
+        })
+        assert cred_res.status_code == 200
+        assert cred_res.json()["hasApiKey"] is True
+
+        # Create a custom API connector
+        custom_res = client.post("/api/connectors", json={
+            "name": "Clínica Atlântico",
+            "group": "Clínica / Outro",
+            "protocol": "HL7 FHIR R4",
+            "endpointUrl": "https://api.atlantico.pt/fhir",
+            "apiKey": "sk_atl_12345"
+        })
+        assert custom_res.status_code == 200
+        custom_id = custom_res.json()["id"]
+        assert any(c["id"] == custom_id for c in client.get("/api/connectors").json()["connectors"])
 
         # Sync SNS24 twice: first imports 1 exam, second deduplicates (0 imported)
         sync1 = client.post("/api/connectors/sns24/sync")

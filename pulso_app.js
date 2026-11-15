@@ -439,12 +439,107 @@
           const store = getStaticStore();
           const pat = staticFindPatient(store, s?.patientId);
           const links = pat.connectorLinks || {};
+          const customs = pat.customConnectors || [];
+          const mask = (v) => {
+            const t = (v || "").trim();
+            if (!t) return "";
+            return t.length <= 4 ? "••••" : "•".repeat(Math.min(12, t.length - 4)) + t.slice(-4);
+          };
           return {
-            connectors: STATIC_PT_CONNECTORS.map((c) => {
-              const st = links[c.id] || { connected: c.id === "sns24", lastSync: null };
-              return Object.assign({}, c, { connected: !!st.connected, lastSync: st.lastSync || null });
+            connectors: [...STATIC_PT_CONNECTORS, ...customs].map((c) => {
+              const st = links[c.id] || { connected: c.id === "sns24", lastSync: null, apiKey: "", clientId: "", endpointUrl: c.endpointUrl || "" };
+              return Object.assign({}, c, {
+                connected: !!st.connected,
+                lastSync: st.lastSync || null,
+                hasApiKey: !!(st.apiKey && st.apiKey.trim()),
+                apiKeyMasked: mask(st.apiKey),
+                clientId: st.clientId || "",
+                endpointUrl: st.endpointUrl || c.endpointUrl || "",
+              });
             }),
           };
+        }
+      ),
+    addCustomConnector: (data) =>
+      withFallback(
+        () => apiFetch("/api/connectors", { method: "POST", body: JSON.stringify(data || {}) }),
+        () => {
+          const s = getStaticSession();
+          const store = getStaticStore();
+          const pat = staticFindPatient(store, s?.patientId);
+          const name = ((data && data.name) || "").trim();
+          if (name.length < 2) throw new Error("Indique o nome da entidade ou API.");
+          const cid = "custom-" + name.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 20) + "-" + Math.random().toString(36).slice(2, 6);
+          pat.customConnectors = pat.customConnectors || [];
+          pat.customConnectors.unshift({
+            id: cid,
+            name,
+            group: (data && data.group) || "Laboratório Clínico",
+            protocol: (data && data.protocol) || "HL7 FHIR R4 / API Key",
+            description: (data && data.description) || "Ligação API personalizada configurada pelo utente.",
+            endpointUrl: (data && data.endpointUrl) || "",
+            custom: true,
+            sampleExam: {
+              externalId: cid + "-2026-01",
+              title: `Registo Clínico Sincronizado — ${name}`,
+              category: "blood_tests",
+              examType: "Importação API",
+              specialty: "Clínica Geral",
+              issuer: name,
+              examDate: new Date().toISOString().slice(0, 10),
+              summary: `Sincronizado automaticamente via ${(data && data.protocol) || "API"}.`,
+              extractedValues: [{ name: "Estado da Ligação", value: 100, unit: "%", referenceRange: "OK" }],
+            },
+          });
+          pat.connectorLinks = pat.connectorLinks || {};
+          pat.connectorLinks[cid] = {
+            connected: !!(data && data.apiKey && data.apiKey.trim()),
+            lastSync: null,
+            apiKey: (data && data.apiKey) || "",
+            clientId: (data && data.clientId) || "",
+            endpointUrl: (data && data.endpointUrl) || "",
+          };
+          pat.auditLogs = pat.auditLogs || [];
+          pat.auditLogs.unshift({
+            action: "CONNECTOR_CREATED",
+            actorRole: s?.role || "patient",
+            actorName: pat.displayName,
+            details: `Nova ligação API configurada: ${name}.`,
+            createdAt: Math.floor(Date.now() / 1000),
+          });
+          saveStaticStore(store);
+          return { ok: true, id: cid, name };
+        }
+      ),
+    saveConnectorCredentials: (provider, creds) =>
+      withFallback(
+        () => apiFetch(`/api/connectors/${encodeURIComponent(provider)}/credentials`, { method: "POST", body: JSON.stringify(creds || {}) }),
+        () => {
+          const s = getStaticSession();
+          const store = getStaticStore();
+          const pat = staticFindPatient(store, s?.patientId);
+          const all = [...STATIC_PT_CONNECTORS, ...(pat.customConnectors || [])];
+          const conn = all.find((c) => c.id === provider);
+          if (!conn) throw new Error("Conector desconhecido.");
+          pat.connectorLinks = pat.connectorLinks || {};
+          const prev = pat.connectorLinks[provider] || {};
+          pat.connectorLinks[provider] = {
+            connected: true,
+            lastSync: prev.lastSync || null,
+            apiKey: ((creds && creds.apiKey) || "").trim(),
+            clientId: ((creds && creds.clientId) || "").trim(),
+            endpointUrl: ((creds && creds.endpointUrl) || "").trim(),
+          };
+          pat.auditLogs = pat.auditLogs || [];
+          pat.auditLogs.unshift({
+            action: "CONNECTOR_KEY_SAVED",
+            actorRole: s?.role || "patient",
+            actorName: pat.displayName,
+            details: `API Key / credenciais guardadas para ${conn.name}.`,
+            createdAt: Math.floor(Date.now() / 1000),
+          });
+          saveStaticStore(store);
+          return { ok: true, provider, hasApiKey: !!(creds && creds.apiKey && creds.apiKey.trim()) };
         }
       ),
     toggleConnector: (provider, connected) =>
@@ -454,11 +549,12 @@
           const s = getStaticSession();
           const store = getStaticStore();
           const pat = staticFindPatient(store, s?.patientId);
-          const conn = STATIC_PT_CONNECTORS.find((c) => c.id === provider);
+          const all = [...STATIC_PT_CONNECTORS, ...(pat.customConnectors || [])];
+          const conn = all.find((c) => c.id === provider);
           if (!conn) throw new Error("Conector desconhecido.");
           pat.connectorLinks = pat.connectorLinks || {};
           const prev = pat.connectorLinks[provider] || {};
-          pat.connectorLinks[provider] = { connected: !!connected, lastSync: prev.lastSync || null };
+          pat.connectorLinks[provider] = Object.assign({}, prev, { connected: !!connected });
           pat.auditLogs = pat.auditLogs || [];
           pat.auditLogs.unshift({
             action: connected ? "CONNECTOR_LINKED" : "CONNECTOR_UNLINKED",
@@ -478,11 +574,13 @@
           const s = getStaticSession();
           const store = getStaticStore();
           const pat = staticFindPatient(store, s?.patientId);
-          const conn = STATIC_PT_CONNECTORS.find((c) => c.id === provider);
+          const all = [...STATIC_PT_CONNECTORS, ...(pat.customConnectors || [])];
+          const conn = all.find((c) => c.id === provider);
           if (!conn) throw new Error("Conector desconhecido.");
           const now = Date.now() / 1000;
           pat.connectorLinks = pat.connectorLinks || {};
-          pat.connectorLinks[provider] = { connected: true, lastSync: now };
+          const prev = pat.connectorLinks[provider] || {};
+          pat.connectorLinks[provider] = Object.assign({}, prev, { connected: true, lastSync: now });
           const exId = `conn-${pat.id || "pat"}-${conn.sampleExam.externalId}`;
           pat.exams = pat.exams || [];
           let imported = 0;
@@ -527,11 +625,11 @@
           const mode = (data && data.mode) || "manual_hold_2s";
           const neighbors = (data && data.neighborsNotified) || 3;
           const gps = (data && data.gps) || "41.1780° N, 8.6080° W (Porto)";
-          const details = `Pulso=${data && data.onWrist !== false} · GPS=${gps} · Vizinhos=${neighbors} · ${(data && data.notes) || "Acionamento de emergência médica"}`;
+          const details = `Pulso=${data && data.onWrist !== false} · GPS=${gps} · Socorristas da Comunidade=${neighbors} · ${(data && data.notes) || "Acionamento de emergência médica"}`;
           pat.events = pat.events || [];
           pat.events.unshift({
             id: evid,
-            title: `ALERTA SOS (${mode}) · 112 & ${neighbors} Vizinhos`,
+            title: `ALERTA SOS (${mode}) · 112 & ${neighbors} Socorristas da Comunidade`,
             eventType: "urgent",
             startDate: new Date().toISOString().slice(0, 10),
             endDate: null,
