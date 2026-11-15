@@ -1945,7 +1945,34 @@
     }
 
     // Ingestão por Email
+    let lastSimulatedEmailExam = null;
+
     function simulateEmailArrival(type) {
+      lastSimulatedEmailExam = type === 'unilabs'
+        ? {
+            title: 'Bioquímica & Função Renal (Email IA)',
+            category: 'blood_tests',
+            issuer: 'Unilabs Portugal',
+            examDate: '2026-11-08',
+            summary: 'Recebido via email IA (resultados@unilabs.pt) · DKIM Válida',
+            extractedValues: [
+              { name: 'Glicose', value: 94, unit: 'mg/dL', referenceRange: '70 - 100' },
+              { name: 'Creatinina', value: 0.98, unit: 'mg/dL', referenceRange: '0.70 - 1.20' },
+              { name: 'eGFR', value: 82, unit: 'mL/min', referenceRange: '> 60' }
+            ]
+          }
+        : {
+            title: 'Hemograma Completo (Email IA)',
+            category: 'blood_tests',
+            issuer: 'Hospital CUF Porto',
+            examDate: '2026-11-09',
+            summary: 'Recebido via email IA (notificacoes@cuf.pt) · DKIM Válida',
+            extractedValues: [
+              { name: 'Hemoglobina', value: 14.2, unit: 'g/dL', referenceRange: '13.0 - 17.5' },
+              { name: 'Leucócitos', value: 6.8, unit: 'x10³/µL', referenceRange: '4.0 - 11.0' },
+              { name: 'Plaquetas', value: 215, unit: 'x10³/µL', referenceRange: '150 - 400' }
+            ]
+          };
       const display = document.getElementById('ai-pipeline-display');
       display.classList.remove('hidden');
 
@@ -1999,9 +2026,16 @@
       }, 2300);
     }
 
-    function approveAndAddToRecord() {
-      alert("✅ Exame e biomarcadores LOINC integrados no histórico!");
-      switchTab('dashboard');
+    async function approveAndAddToRecord() {
+      if (!lastSimulatedEmailExam) return;
+      try {
+        await window.PulsoAPI.createExam(lastSimulatedEmailExam);
+        await refreshClinicalWorkspace();
+        alert("✅ Exame e biomarcadores LOINC integrados no histórico!");
+        switchTab('dashboard');
+      } catch (err) {
+        alert(err.message || "Erro ao integrar exame no histórico.");
+      }
     }
 
     function triggerOcrDemo() {
