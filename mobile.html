@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="pt" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>PULSO Mobile — Aplicação do Doente</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- PULSO Unified API Client -->
+  <script src="pulso_app.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
+    
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #0C1416;
+      color: #E4ECE8;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .neon-glow {
+      box-shadow: 0 0 20px rgba(184, 240, 74, 0.3);
+    }
+    .neon-pulse {
+      animation: neonPulse 2s infinite ease-in-out;
+    }
+    @keyframes neonPulse {
+      0%, 100% { box-shadow: 0 0 15px rgba(184, 240, 74, 0.25); }
+      50% { box-shadow: 0 0 30px rgba(184, 240, 74, 0.55); }
+    }
+    /* Esconder scrollbar mantendo navegação fluida */
+    ::-webkit-scrollbar {
+      display: none;
+    }
+  </style>
+</head>
+<body class="bg-[#0C1416] text-[#E4ECE8] min-h-screen flex justify-center items-center p-0 sm:p-4">
+
+  <!-- Moldura Móvel (iPhone Viewport) -->
+  <div class="w-full sm:max-w-[410px] h-[100vh] sm:h-[844px] bg-[#0C1416] sm:rounded-[44px] sm:border-[8px] sm:border-[#1E3338] shadow-2xl flex flex-col relative overflow-hidden">
+    
+    <!-- Barra Superior de Estado (iOS Style) -->
+    <div class="pt-3 px-6 pb-2 flex justify-between items-center text-xs font-semibold text-white/90 z-30 select-none">
+      <span id="mobile-clock" class="tracking-tight font-medium text-xs">10:24</span>
+      <!-- Dynamic Island Mockup -->
+      <div class="w-24 h-5 bg-black rounded-full mx-auto hidden sm:block"></div>
+      <div class="flex items-center space-x-1.5 text-xs text-white">
+        <i data-lucide="signal" class="w-3.5 h-3.5"></i>
+        <i data-lucide="wifi" class="w-3.5 h-3.5"></i>
+        <i data-lucide="battery-charging" class="w-4 h-4 text-[#B8F04A]"></i>
+      </div>
+    </div>
+
+    <!-- Header da Aplicação PULSO -->
+    <header class="px-5 py-2.5 flex items-center justify-between border-b border-[#1E3338]/60 bg-[#0C1416]/90 backdrop-blur z-20">
+      <div class="flex items-center space-x-2">
+        <div class="w-7 h-7 rounded-lg bg-[#14261F] border border-[#B8F04A]/30 flex items-center justify-center text-[#B8F04A]">
+          <i data-lucide="activity" class="w-4 h-4"></i>
+        </div>
+        <span class="text-lg font-black tracking-wider text-white">PULSO</span>
+        <span class="w-1.5 h-1.5 rounded-full bg-[#B8F04A] shadow-[0_0_8px_#B8F04A]"></span>
+      </div>
+
+      <div class="flex items-center space-x-2">
+        <!-- Notificação de Sincronização -->
+        <div id="sync-pill" class="hidden text-[10px] px-2 py-0.5 rounded-full bg-[#14332D] text-[#5EEAD4] border border-[#5EEAD4]/30 flex items-center">
+          <span class="w-1.5 h-1.5 rounded-full bg-[#B8F04A] animate-pulse mr-1"></span>
+          Médica Conectada
+        </div>
+        <button type="button" onclick="openMobileAuthModal()" id="mobile-avatar-badge" title="Conta do Utente / Registar por Nº SNS" class="w-8 h-8 rounded-full bg-[#162529] hover:border-[#B8F04A] border border-[#1E3338] text-[#B8F04A] font-bold text-xs flex items-center justify-center transition">
+          AS
+        </button>
+      </div>
+    </header>
+
+    <!-- Área de Conteúdo Scrollável com as 3 Vistas Principais -->
+    <div class="flex-1 overflow-y-auto px-4 py-4 space-y-4 pb-24">
+
+      <!-- ======================================================== -->
+      <!-- VISTA 1: O MEU HISTÓRICO (ECRÃ 1 DO TELEMÓVEL) -->
+      <!-- ======================================================== -->
+      <div id="mobile-view-history" class="mobile-view space-y-4">
+        
+        <div class="flex items-center justify-between">
+          <h2 class="text-xl font-bold text-white tracking-tight">O meu histórico</h2>
+          <span id="mobile-history-count" class="text-[11px] text-[#8DA39E] bg-[#131F22] px-2.5 py-1 rounded-full border border-[#1E3338]">5 registos</span>
+        </div>
+
+        <!-- Lista de Exames Idêntica ao Ecrã 1 (atualizada dinamicamente pelo backend) -->
+        <div id="mobile-history-list" class="space-y-2.5">
+          
+          <!-- Item 1: Análises ao sangue (SNS) -->
+          <div class="p-3.5 rounded-2xl bg-[#131F22] border border-[#1E3338] flex items-center justify-between active:scale-[0.98] transition cursor-pointer" onclick="openExamModal('Análises ao Sangue', '12 jan 2025', 'USF São João (SNS)', 'Glicose 94 mg/dL · Creatinina 0,98 mg/dL · Ureia 32 mg/dL')">
+            <div class="flex items-center space-x-3">
+              <div class="w-9 h-9 rounded-xl bg-[#14332D] text-[#5EEAD4] flex items-center justify-center border border-[#5EEAD4]/20">
+                <i data-lucide="droplet" class="w-4 h-4 text-[#B8F04A]"></i>
+              </div>
+              <div>
+                <div class="flex items-center space-x-2">
+                  <h4 class="text-sm font-bold text-white">Análises ao sangue</h4>
+                  <span class="px-2 py-0.2 rounded-full text-[9px] font-bold bg-[#14332D] text-[#5EEAD4] border border-[#5EEAD4]/30">SNS</span>
+                </div>
+                <p class="text-[11px] text-[#8DA39E]">12 jan 2025 · USF São João</p>
+              </div>
+            </div>
+            <i data-lucide="chevron-right" class="w-4 h-4 text-[#8DA39E]"></i>
+          </div>
+
+          <!-- Item 2: Hemograma (Privado) -->
+          <div class="p-3.5 rounded-2xl bg-[#131F22] border border-[#1E3338] flex items-center justify-between active:scale-[0.98] transition cursor-pointer" onclick="openExamModal('Hemograma', '10 out 2024', 'Unilabs Portugal (Privado)', 'Leucócitos 6.8 · Hemoglobina 14.2 g/dL · Plaquetas 215k')">
+            <div class="flex items-center space-x-3">
+              <div class="w-9 h-9 rounded-xl bg-[#1E293B] text-[#94A3B8] flex items-center justify-center border border-slate-700">
+                <i data-lucide="flask-conical" class="w-4 h-4 text-[#B8F04A]"></i>
+              </div>
+              <div>
+                <div class="flex items-center space-x-2">
+                  <h4 class="text-sm font-bold text-white">Hemograma</h4>
+                  <span class="px-2 py-0.2 rounded-full text-[9px] font-bold bg-[#1E293B] text-[#94A3B8] border border-slate-700">Privado</span>
+                </div>
+                <p class="text-[11px] text-[#8DA39E]">10 out 2024 · Unilabs Portugal</p>
+              </div>
+            </div>
+            <i data-lucide="chevron-right" class="w-4 h-4 text-[#8DA39E]"></i>
+          </div>
+
+          <!-- Item 3: Creatinina (Privado) -->
+          <div class="p-3.5 rounded-2xl bg-[#131F22] border border-[#1E3338] flex items-center justify-between active:scale-[0.98] transition cursor-pointer" onclick="openExamModal('Creatinina & Função Renal', '10 out 2024', 'Hospital da Luz (Privado)', 'Creatinina 0,98 mg/dL · Filtração Glomerular eGFR 82 mL/min')">
+            <div class="flex items-center space-x-3">
+              <div class="w-9 h-9 rounded-xl bg-[#1E293B] text-[#94A3B8] flex items-center justify-center border border-slate-700">
+                <i data-lucide="activity" class="w-4 h-4 text-[#B8F04A]"></i>
+              </div>
+              <div>
+                <div class="flex items-center space-x-2">
+                  <h4 class="text-sm font-bold text-white">Creatinina</h4>
+                  <span class="px-2 py-0.2 rounded-full text-[9px] font-bold bg-[#1E293B] text-[#94A3B8] border border-slate-700">Privado</span>
+                </div>
+                <p class="text-[11px] text-[#8DA39E]">10 out 2024 · Hospital da Luz</p>
+              </div>
+            </div>
+            <i data-lucide="chevron-right" class="w-4 h-4 text-[#8DA39E]"></i>
+          </div>
+
+          <!-- Item 4: Análises ao sangue (SNS) -->
+          <div class="p-3.5 rounded-2xl bg-[#131F22] border border-[#1E3338] flex items-center justify-between active:scale-[0.98] transition cursor-pointer" onclick="openExamModal('Perfil Lipídico', '22 mai 2024', 'USF São João (SNS)', 'Colesterol Total 182 mg/dL · HDL 48 mg/dL · LDL 112 mg/dL')">
+            <div class="flex items-center space-x-3">
+              <div class="w-9 h-9 rounded-xl bg-[#14332D] text-[#5EEAD4] flex items-center justify-center border border-[#5EEAD4]/20">
+                <i data-lucide="droplet" class="w-4 h-4 text-[#B8F04A]"></i>
+              </div>
+              <div>
+                <div class="flex items-center space-x-2">
+                  <h4 class="text-sm font-bold text-white">Análises ao sangue</h4>
+                  <span class="px-2 py-0.2 rounded-full text-[9px] font-bold bg-[#14332D] text-[#5EEAD4] border border-[#5EEAD4]/30">SNS</span>
+                </div>
+                <p class="text-[11px] text-[#8DA39E]">22 mai 2024 · USF São João</p>
+              </div>
+            </div>
+            <i data-lucide="chevron-right" class="w-4 h-4 text-[#8DA39E]"></i>
+          </div>
+
+          <!-- Item 5: Hemograma (SNS) -->
+          <div class="p-3.5 rounded-2xl bg-[#131F22] border border-[#1E3338] flex items-center justify-between active:scale-[0.98] transition cursor-pointer" onclick="openExamModal('Hemograma Anual', '15 fev 2024', 'USF São João (SNS)', 'Hemoglobina 13.9 g/dL · Hematócrito 42% · Controlo Normal')">
+            <div class="flex items-center space-x-3">
+              <div class="w-9 h-9 rounded-xl bg-[#14332D] text-[#5EEAD4] flex items-center justify-center border border-[#5EEAD4]/20">
+                <i data-lucide="flask-conical" class="w-4 h-4 text-[#B8F04A]"></i>
+              </div>
+              <div>
+                <div class="flex items-center space-x-2">
+                  <h4 class="text-sm font-bold text-white">Hemograma</h4>
+                  <span class="px-2 py-0.2 rounded-full text-[9px] font-bold bg-[#14332D] text-[#5EEAD4] border border-[#5EEAD4]/30">SNS</span>
+                </div>
+                <p class="text-[11px] text-[#8DA39E]">15 fev 2024 · USF São João</p>
+              </div>
+            </div>
+            <i data-lucide="chevron-right" class="w-4 h-4 text-[#8DA39E]"></i>
+          </div>
+
+        </div>
+
+        <!-- Botões Rápidos: Digitalizar, + Medição, Aprender -->
+        <div class="pt-2 flex flex-wrap justify-center gap-2">
+          <label class="cursor-pointer px-4 py-2.5 rounded-full bg-[#B8F04A] hover:bg-[#C9F762] text-[#0C1416] font-extrabold text-xs flex items-center space-x-1.5 shadow-[0_0_20px_rgba(184,240,74,0.4)] active:scale-95 transition">
+            <i data-lucide="camera" class="w-4 h-4"></i>
+            <span>Digitalizar</span>
+            <input type="file" accept=".pdf,image/*" capture="environment" class="hidden" onchange="mobileTriggerRealUpload(this.files[0])">
+          </label>
+          <button type="button" onclick="openMobileMeasurementModal()" class="px-3.5 py-2.5 rounded-full bg-[#162529] hover:bg-[#1E3338] text-[#5EEAD4] border border-[#5EEAD4]/30 font-bold text-xs flex items-center space-x-1">
+            <span>+ Medição</span>
+          </button>
+          <button type="button" onclick="openMobileLearningModal()" class="px-3.5 py-2.5 rounded-full bg-[#162529] hover:bg-[#1E3338] text-white border border-[#1E3338] font-bold text-xs flex items-center space-x-1">
+            <span>📚 Aprender</span>
+          </button>
+        </div>
+
+      </div>
+
+      <!-- ======================================================== -->
+      <!-- VISTA 2: EVOLUÇÃO CLÍNICA (ECRÃ 2 DO TELEMÓVEL) -->
+      <!-- ======================================================== -->
+      <div id="mobile-view-trends" class="mobile-view hidden space-y-4">
+        
+        <div class="flex items-center justify-between">
+          <h2 class="text-xl font-bold text-white tracking-tight">Evolução clínica</h2>
+        </div>
+
+        <!-- Dropdown Pill Escuro: Glicose -->
+        <div class="p-1 bg-[#131F22] rounded-2xl border border-[#1E3338] flex items-center justify-between px-3.5 py-2">
+          <span class="text-xs text-[#8DA39E]">Parâmetro Clínico:</span>
+          <select id="mobile-biomarker-select" onchange="renderMobileChart()" class="bg-[#162529] text-[#B8F04A] font-bold text-xs rounded-xl px-2.5 py-1 border border-[#1E3338] focus:outline-none">
+            <option value="glucose">Glicose</option>
+            <option value="creatinine">Creatinina</option>
+            <option value="cholesterol">Colesterol</option>
+          </select>
+        </div>
+
+        <!-- Gráfico Dark OLED com Linha Lime -->
+        <div class="p-4 rounded-3xl bg-[#131F22] border border-[#1E3338] space-y-3">
+          <div class="h-44">
+            <canvas id="mobileTrendChart"></canvas>
+          </div>
+          <div class="flex justify-between items-center text-[10px] text-[#8DA39E] border-t border-[#1E3338] pt-2">
+            <span>Intervalo Ref: 70 - 100 mg/dL</span>
+            <span class="text-[#B8F04A] font-mono">LOINC 1558-6</span>
+          </div>
+        </div>
+
+        <!-- Destaque do Valor Atual idêntico ao Telemóvel (94 mg/dL + badge) -->
+        <div class="p-4 rounded-3xl bg-[#131F22] border border-[#1E3338] space-y-2">
+          <div class="flex justify-between items-baseline">
+            <span class="text-xs text-[#8DA39E]">Último valor</span>
+            <span class="text-3xl font-black text-[#B8F04A]">94 <span class="text-sm font-normal text-[#8DA39E]">mg/dL</span></span>
+          </div>
+          <div class="flex items-center justify-between pt-1">
+            <span class="inline-flex items-center px-3 py-1 rounded-full bg-[#14332D] text-[#5EEAD4] text-[11px] font-bold border border-[#5EEAD4]/30">
+              <span class="w-1.5 h-1.5 rounded-full bg-[#B8F04A] mr-1.5 shadow-[0_0_6px_#B8F04A]"></span>
+              Dentro do intervalo
+            </span>
+            <span class="text-[10px] text-[#8DA39E] font-mono">Ref.: 70 – 100 mg/dL</span>
+          </div>
+        </div>
+
+        <!-- Mini Sparklines dos outros parâmetros (Colesterol & Creatinina) -->
+        <div class="space-y-2.5">
+          <div class="p-3.5 rounded-2xl bg-[#131F22] border border-[#1E3338] flex items-center justify-between">
+            <div>
+              <span class="text-xs text-[#8DA39E] block">Colesterol</span>
+              <span class="text-base font-extrabold text-white">182 <span class="text-xs font-normal text-[#8DA39E]">mg/dL</span></span>
+            </div>
+            <div class="flex items-center space-x-2">
+              <svg class="w-16 h-6" viewBox="0 0 100 30">
+                <path d="M0,25 Q25,20 50,15 T100,8" stroke="#B8F04A" stroke-width="2.5" fill="none"/>
+              </svg>
+              <i data-lucide="chevron-right" class="w-4 h-4 text-[#8DA39E]"></i>
+            </div>
+          </div>
+
+          <div class="p-3.5 rounded-2xl bg-[#131F22] border border-[#1E3338] flex items-center justify-between">
+            <div>
+              <span class="text-xs text-[#8DA39E] block">Creatinina</span>
+              <span class="text-base font-extrabold text-white">0,98 <span class="text-xs font-normal text-[#8DA39E]">mg/dL</span></span>
+            </div>
+            <div class="flex items-center space-x-2">
+              <svg class="w-16 h-6" viewBox="0 0 100 30">
+                <path d="M0,22 Q30,24 60,18 T100,10" stroke="#B8F04A" stroke-width="2.5" fill="none"/>
+              </svg>
+              <i data-lucide="chevron-right" class="w-4 h-4 text-[#8DA39E]"></i>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ======================================================== -->
+      <!-- VISTA 3: PARTILHA SEGURA -->
+      <!-- ======================================================== -->
+      <div id="mobile-view-share" class="mobile-view hidden flex flex-col justify-start space-y-3 pb-4">
+        
+        <!-- Título e Halo Cadeado -->
+        <div class="text-center space-y-1 pt-1">
+          <h2 class="text-lg font-bold text-white tracking-tight">Partilha segura</h2>
+          <div class="mx-auto w-12 h-12 rounded-full bg-[#14261F] border border-[#B8F04A]/30 flex items-center justify-center text-[#B8F04A] shadow-[0_0_18px_rgba(184,240,74,0.3)]">
+            <i data-lucide="lock" class="w-6 h-6 text-[#B8F04A]"></i>
+          </div>
+          <p class="text-center font-bold text-white text-xs tracking-wide">Dar acesso aos meus exames</p>
+        </div>
+
+        <!-- CARTÃO DO UTENTE COM QR CODE AO CENTRO E NOME/SNS POR BAIXO -->
+        <div class="p-3 rounded-2xl bg-[#131F22] border border-[#1E3338] flex flex-col items-center justify-center text-center shadow-md">
+          <!-- QR Code ao centro com alto contraste, leitura rápida por câmara ou leitor ótico -->
+          <div class="p-2.5 bg-white rounded-xl border border-[#B8F04A]/40 shadow-sm flex flex-col items-center justify-center cursor-pointer hover:scale-102 transition group" onclick="alertQrInfo()" title="Clique para ler/validar QR Code">
+            <img src="qr_utente_antonio.png" alt="QR Code Utente" class="w-24 h-24 object-contain">
+            <span id="mobile-qr-sns" class="font-mono text-[10px] text-black font-extrabold tracking-wider mt-1">234 891 024</span>
+          </div>
+
+          <!-- Nome e Número de Utente por baixo do QR Code -->
+          <div class="mt-2 text-center">
+            <span id="mobile-patient-name" class="text-sm font-bold text-white block leading-tight">Sr. António Silva</span>
+            <span id="mobile-patient-sns" class="text-xs text-[#8DA39E] font-medium block mt-0.5">Nº Utente SNS: 234 891 024</span>
+            <span class="inline-flex items-center mt-1 px-2.5 py-0.5 rounded text-[9px] font-semibold bg-[#14261F] text-[#B8F04A] border border-[#B8F04A]/30">
+              <i data-lucide="qr-code" class="w-3 h-3 mr-1"></i>QR Code clínico para leitura imediata
+            </span>
+          </div>
+        </div>
+
+        <!-- SELEÇÃO DE TEMPO (Reduzida na vertical, sem referências a consulta, urgência e seguimento) -->
+        <div class="grid grid-cols-3 gap-2">
+          <button type="button" onclick="selectDuration('1h', '1 Hora')" id="dur-btn-1h" class="dur-btn py-1.5 px-2 rounded-xl bg-[#B8F04A] text-[#0C1416] font-extrabold text-xs flex items-center justify-center space-x-1.5 shadow-[0_0_12px_rgba(184,240,74,0.3)] transition">
+            <i data-lucide="clock" class="w-3.5 h-3.5"></i>
+            <span>1 Hora</span>
+          </button>
+
+          <button type="button" onclick="selectDuration('1d', '1 Dia')" id="dur-btn-1d" class="dur-btn py-1.5 px-2 rounded-xl bg-[#162529] text-[#8DA39E] hover:text-white font-bold text-xs flex items-center justify-center space-x-1.5 border border-[#1E3338] transition">
+            <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
+            <span>1 Dia</span>
+          </button>
+
+          <button type="button" onclick="selectDuration('1m', '1 Mês')" id="dur-btn-1m" class="dur-btn py-1.5 px-2 rounded-xl bg-[#162529] text-[#8DA39E] hover:text-white font-bold text-xs flex items-center justify-center space-x-1.5 border border-[#1E3338] transition">
+            <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
+            <span>1 Mês</span>
+          </button>
+        </div>
+
+        <!-- ZONA DE AÇÃO FIXA E ESTÁVEL (Os botões NUNCA trocam de lugar!) -->
+        <div class="pt-1">
+          <!-- Botão Obter Código (Visível inicialmente) -->
+          <div id="btn-generate-wrapper">
+            <button id="btn-generate-code" onclick="generateAccessCode()" class="w-full py-3.5 bg-[#B8F04A] hover:bg-[#C9F762] text-[#0C1416] font-black text-sm rounded-full shadow-[0_0_20px_rgba(184,240,74,0.35)] active:scale-95 transition flex items-center justify-center space-x-2">
+              <i data-lucide="key-round" class="w-4 h-4"></i>
+              <span>Obter Código de 8 Dígitos</span>
+            </button>
+          </div>
+
+          <!-- Cartão do Código Obtido (Substitui o botão no mesmo local exato, sem saltos!) -->
+          <div id="code-display-card" class="hidden p-3.5 rounded-2xl bg-[#14231E] border-2 border-[#B8F04A] space-y-2.5 shadow-[0_0_20px_rgba(184,240,74,0.25)] neon-pulse">
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] font-bold text-[#5EEAD4] uppercase tracking-wider flex items-center">
+                <span class="w-2 h-2 rounded-full bg-[#B8F04A] animate-ping mr-1.5"></span>
+                CÓDIGO DE ACESSO ATIVO
+              </span>
+              <span id="display-duration-badge" class="px-2 py-0.5 rounded-full bg-[#131F22] text-[#B8F04A] text-[10px] font-bold border border-[#B8F04A]/30">
+                Válido: 1 Hora
+              </span>
+            </div>
+
+            <div class="text-center py-2 bg-[#0C1416] rounded-xl border border-[#1E3338]">
+              <div id="active-access-code" class="text-2xl font-black font-mono tracking-widest text-[#B8F04A] select-all">
+                7492 1830
+              </div>
+              <p id="countdown-text" class="text-[10px] text-[#5EEAD4] mt-0.5 font-mono">
+                Expira em: 59m 59s
+              </p>
+            </div>
+
+            <div class="flex space-x-2">
+              <button onclick="copyAccessCode()" class="flex-1 py-2 rounded-xl bg-[#162529] hover:bg-[#1E3338] text-white text-xs font-bold border border-[#1E3338] flex items-center justify-center space-x-1 transition">
+                <i data-lucide="copy" class="w-3.5 h-3.5 text-[#B8F04A]"></i>
+                <span>Copiar Código</span>
+              </button>
+              <button onclick="revokeAccessCode()" class="px-3 py-2 rounded-xl bg-[#2A1416] hover:bg-red-900/60 text-red-300 text-xs font-bold border border-red-500/30 flex items-center justify-center transition" title="Obter Novo / Cancelar">
+                <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Barra Inferior de Navegação Móvel (Idêntica aos Ícones da Imagem) -->
+    <nav class="absolute bottom-0 left-0 right-0 h-16 bg-[#090F11]/95 backdrop-blur-md border-t border-[#1E3338] px-6 flex justify-between items-center z-30">
+      
+      <!-- Tab 1: Histórico (Home/Doc) -->
+      <button onclick="switchMobileTab('history')" id="mobile-tab-history" class="mobile-nav-btn flex flex-col items-center text-[#8DA39E] hover:text-[#B8F04A] transition py-1">
+        <i data-lucide="folder" class="w-5 h-5"></i>
+        <span class="text-[9px] mt-1 font-semibold">Histórico</span>
+      </button>
+
+      <!-- Tab 2: Evolução Clínica (Gráfico) -->
+      <button onclick="switchMobileTab('trends')" id="mobile-tab-trends" class="mobile-nav-btn flex flex-col items-center text-[#8DA39E] hover:text-[#B8F04A] transition py-1">
+        <i data-lucide="trending-up" class="w-5 h-5"></i>
+        <span class="text-[9px] mt-1 font-semibold">Evolução</span>
+      </button>
+
+      <!-- Tab 3: Partilha Segura (Escudo/Lock) -->
+      <button onclick="switchMobileTab('share')" id="mobile-tab-share" class="mobile-nav-btn flex flex-col items-center text-[#B8F04A] transition py-1">
+        <div class="relative">
+          <i data-lucide="shield" class="w-5 h-5 text-[#B8F04A]"></i>
+          <span class="w-1.5 h-1.5 rounded-full bg-[#B8F04A] absolute -top-0.5 -right-0.5 shadow-[0_0_6px_#B8F04A]"></span>
+        </div>
+        <span class="text-[9px] mt-1 font-bold text-[#B8F04A]">Partilha</span>
+      </button>
+
+    </nav>
+
+  </div>
+
+  <!-- Modal Simples de Detalhe de Exame -->
+  <div id="exam-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4" onclick="closeExamModal()">
+    <div class="bg-[#131F22] border border-[#1E3338] rounded-3xl p-5 max-w-sm w-full space-y-4" onclick="event.stopPropagation()">
+      <div class="flex justify-between items-start">
+        <div>
+          <span class="text-[10px] font-bold text-[#5EEAD4] bg-[#14332D] px-2 py-0.5 rounded-full">REGISTO CLÍNICO AUTÊNTICO</span>
+          <h3 id="modal-exam-title" class="text-base font-bold text-white mt-1">Análises ao Sangue</h3>
+          <p id="modal-exam-meta" class="text-xs text-[#8DA39E]">12 jan 2025 · USF São João</p>
+        </div>
+        <button onclick="closeExamModal()" class="text-[#8DA39E] hover:text-white p-1">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="p-3.5 rounded-2xl bg-[#0C1416] border border-[#1E3338] text-xs font-mono space-y-1">
+        <p class="text-slate-400 text-[10px]">VALORES MEDIDOS:</p>
+        <p id="modal-exam-values" class="text-white font-semibold">Glicose 94 mg/dL · Creatinina 0,98 mg/dL</p>
+        <p class="text-[#B8F04A] text-[10px] pt-1">Assinatura Digital SHA-256 Verificada</p>
+      </div>
+
+      <button onclick="closeExamModal()" class="w-full py-2.5 bg-[#B8F04A] text-[#0C1416] font-bold text-xs rounded-xl">
+        Fechar
+      </button>
+    </div>
+  </div>
+
+  <!-- MODAL DE CONTA / REGISTO POR Nº DE UTENTE SNS -->
+  <div id="mobile-auth-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-[#131F22] border border-[#1E3338] rounded-3xl w-full max-w-sm p-5 space-y-4 shadow-2xl">
+      <div class="flex justify-between items-center">
+        <div>
+          <span class="text-[10px] font-bold text-[#B8F04A] uppercase tracking-wider">Carteira do Utente</span>
+          <h3 class="text-base font-extrabold text-white">Conta & Registo SNS</h3>
+        </div>
+        <button onclick="closeMobileAuthModal()" class="text-[#8DA39E] hover:text-white p-1">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2 bg-[#0C1416] p-1 rounded-xl border border-[#1E3338]">
+        <button type="button" onclick="toggleMobileAuthMode('login')" id="m-tab-login" class="py-1.5 rounded-lg text-xs font-bold bg-[#B8F04A] text-[#0C1416]">Entrar (SNS)</button>
+        <button type="button" onclick="toggleMobileAuthMode('register')" id="m-tab-register" class="py-1.5 rounded-lg text-xs font-bold text-[#8DA39E]">Registar Novo</button>
+      </div>
+
+      <div id="m-auth-login-box" class="space-y-2.5">
+        <input id="m-login-sns" type="text" placeholder="Nº Utente SNS (9 dígitos)" value="234891024" class="w-full bg-[#0C1416] border border-[#1E3338] rounded-xl px-3 py-2 text-xs text-white focus:border-[#B8F04A] focus:outline-none">
+        <input id="m-login-pass" type="password" placeholder="Palavra-passe" value="pulso1234" class="w-full bg-[#0C1416] border border-[#1E3338] rounded-xl px-3 py-2 text-xs text-white focus:border-[#B8F04A] focus:outline-none">
+        <button type="button" onclick="submitMobileLogin()" class="w-full py-2.5 bg-[#B8F04A] text-[#0C1416] font-extrabold text-xs rounded-xl">Iniciar Sessão do Utente</button>
+      </div>
+
+      <div id="m-auth-register-box" class="hidden space-y-2">
+        <input id="m-reg-sns" type="text" placeholder="Nº Utente SNS (9 dígitos, ex: 298112233)" class="w-full bg-[#0C1416] border border-[#1E3338] rounded-xl px-3 py-2 text-xs text-white focus:border-[#B8F04A] focus:outline-none">
+        <input id="m-reg-name" type="text" placeholder="Nome Completo" class="w-full bg-[#0C1416] border border-[#1E3338] rounded-xl px-3 py-2 text-xs text-white focus:border-[#B8F04A] focus:outline-none">
+        <input id="m-reg-birth" type="date" class="w-full bg-[#0C1416] border border-[#1E3338] rounded-xl px-3 py-2 text-xs text-white focus:border-[#B8F04A] focus:outline-none">
+        <input id="m-reg-pass" type="password" placeholder="Palavra-passe (mín. 6 caracteres)" class="w-full bg-[#0C1416] border border-[#1E3338] rounded-xl px-3 py-2 text-xs text-white focus:border-[#B8F04A] focus:outline-none">
+        <button type="button" onclick="submitMobileRegister()" class="w-full py-2.5 bg-[#B8F04A] text-[#0C1416] font-extrabold text-xs rounded-xl">Criar Conta por Nº SNS</button>
+      </div>
+      <p id="m-auth-error" class="hidden text-[11px] text-red-400 font-semibold"></p>
+    </div>
+  </div>
+
+    <!-- Modal Rápido: + Medição Manual -->
+    <div id="mobile-meas-modal" class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+      <div class="bg-[#131F22] border border-[#1E3338] rounded-3xl w-full max-w-xs p-5 space-y-3">
+        <div class="flex justify-between items-center">
+          <h3 class="text-sm font-extrabold text-white">+ Nova Medição</h3>
+          <button onclick="document.getElementById('mobile-meas-modal').classList.add('hidden')" class="text-[#8DA39E]">✕</button>
+        </div>
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <div>
+            <label class="text-[10px] text-[#8DA39E]">Sistólica (mmHg)</label>
+            <input type="number" id="mob-sys" value="122" class="w-full bg-[#0C1416] text-[#B8F04A] font-mono font-bold border border-[#1E3338] rounded-xl px-2.5 py-1.5">
+          </div>
+          <div>
+            <label class="text-[10px] text-[#8DA39E]">Diastólica (mmHg)</label>
+            <input type="number" id="mob-dia" value="78" class="w-full bg-[#0C1416] text-[#B8F04A] font-mono font-bold border border-[#1E3338] rounded-xl px-2.5 py-1.5">
+          </div>
+          <div class="col-span-2">
+            <label class="text-[10px] text-[#8DA39E]">Notas</label>
+            <input type="text" id="mob-meas-notes" placeholder="Em repouso" class="w-full bg-[#0C1416] text-white border border-[#1E3338] rounded-xl px-2.5 py-1.5">
+          </div>
+        </div>
+        <button onclick="saveMobileMeasurement()" class="w-full py-2.5 rounded-xl bg-[#B8F04A] text-[#0C1416] font-extrabold text-xs">Guardar Medição</button>
+      </div>
+    </div>
+
+    <!-- Modal Rápido: Biblioteca Aprender -->
+    <div id="mobile-learn-modal" class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+      <div class="bg-[#131F22] border border-[#1E3338] rounded-3xl w-full max-w-sm p-5 space-y-3 max-h-[80vh] flex flex-col">
+        <div class="flex justify-between items-center">
+          <h3 class="text-sm font-extrabold text-white">📚 Aprender (23 Fichas)</h3>
+          <button onclick="document.getElementById('mobile-learn-modal').classList.add('hidden')" class="text-[#8DA39E]">✕</button>
+        </div>
+        <div id="mobile-learn-list" class="space-y-2 overflow-y-auto text-xs flex-1"></div>
+      </div>
+    </div>
+
+    <script>
+    lucide.createIcons();
+
+    // Relógio dinâmico no topo
+    function updateClock() {
+      const now = new Date();
+      const h = String(now.getHours()).padStart(2, '0');
+      const m = String(now.getMinutes()).padStart(2, '0');
+      const el = document.getElementById('mobile-clock');
+      if (el) el.innerText = `${h}:${m}`;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // Gestão de Abas Móveis
+    function switchMobileTab(tabId) {
+      document.querySelectorAll('.mobile-view').forEach(v => v.classList.add('hidden'));
+      document.querySelectorAll('.mobile-nav-btn').forEach(btn => {
+        btn.classList.remove('text-[#B8F04A]');
+        btn.classList.add('text-[#8DA39E]');
+      });
+
+      const targetView = document.getElementById('mobile-view-' + tabId);
+      const targetBtn = document.getElementById('mobile-tab-' + tabId);
+      if (targetView) targetView.classList.remove('hidden');
+      if (targetBtn) {
+        targetBtn.classList.remove('text-[#8DA39E]');
+        targetBtn.classList.add('text-[#B8F04A]');
+      }
+
+      lucide.createIcons();
+      if (tabId === 'trends') {
+        renderMobileChart();
+      }
+    }
+
+    // Gráfico Móvel
+    let mobileChartInstance = null;
+    function renderMobileChart() {
+      const ctx = document.getElementById('mobileTrendChart');
+      if (!ctx) return;
+      if (mobileChartInstance) mobileChartInstance.destroy();
+
+      mobileChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: ['Fev 24', 'Mai 24', 'Out 24', 'Dez 24', 'Jan 25'],
+          datasets: [
+            {
+              label: 'Glicose',
+              data: [120, 110, 105, 98, 94],
+              borderColor: '#B8F04A',
+              backgroundColor: 'rgba(184, 240, 74, 0.1)',
+              borderWidth: 2.5,
+              tension: 0.35,
+              fill: true,
+              pointBackgroundColor: '#FFFFFF',
+              pointBorderColor: '#B8F04A',
+              pointRadius: 4
+            },
+            {
+              label: 'Ref',
+              data: [100, 100, 100, 100, 100],
+              borderColor: '#64748B',
+              borderDash: [4, 4],
+              borderWidth: 1.5,
+              pointRadius: 0
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: {
+              grid: { color: 'rgba(30, 51, 56, 0.5)' },
+              ticks: { color: '#8DA39E', font: { size: 9 } }
+            },
+            x: {
+              grid: { display: false },
+              ticks: { color: '#8DA39E', font: { size: 9 } }
+            }
+          }
+        }
+      });
+    }
+
+    // Modal de Exames
+    function openExamModal(title, meta, org, values) {
+      document.getElementById('modal-exam-title').innerText = title;
+      document.getElementById('modal-exam-meta').innerText = `${meta} · ${org}`;
+      document.getElementById('modal-exam-values').innerText = values;
+      document.getElementById('exam-modal').classList.remove('hidden');
+    }
+    function closeExamModal() {
+      document.getElementById('exam-modal').classList.add('hidden');
+    }
+
+    function mobileTriggerScan() {
+      alert("📷 Câmara Móvel Ativada: Fotografe o boletim físico para digitalização automática via OCR.");
+    }
+
+    // ============================================================
+    // REQUISITO 2: SELEÇÃO DE DURAÇÃO & OBTENÇÃO DE CÓDIGO (8 DÍGITOS)
+    // ============================================================
+    let selectedDurationKey = '1h';
+    let selectedDurationLabel = '1 Hora';
+    let generatedCode = '7492 1830';
+    let countdownSeconds = 3600;
+    let countdownInterval = null;
+
+    function selectDuration(key, label) {
+      selectedDurationKey = key;
+      selectedDurationLabel = label;
+
+      document.querySelectorAll('.dur-btn').forEach(btn => {
+        btn.className = "dur-btn py-1.5 px-2 rounded-xl bg-[#162529] text-[#8DA39E] hover:text-white font-bold text-xs flex items-center justify-center space-x-1.5 border border-[#1E3338] transition";
+      });
+
+      const activeBtn = document.getElementById('dur-btn-' + key);
+      if (activeBtn) {
+        activeBtn.className = "dur-btn py-1.5 px-2 rounded-xl bg-[#B8F04A] text-[#0C1416] font-extrabold text-xs flex items-center justify-center space-x-1.5 shadow-[0_0_12px_rgba(184,240,74,0.3)] transition";
+      }
+
+      if (key === '1h') countdownSeconds = 3600;
+      else if (key === '1d') countdownSeconds = 86400;
+      else countdownSeconds = 2592000;
+    }
+
+    let currentMobilePatient = { displayName: 'Sr. António Silva', snsNumber: '234891024' };
+
+    function formatSns(s) {
+      const d = (s || '').replace(/\D+/g, '');
+      return d.length === 9 ? `${d.slice(0,3)} ${d.slice(3,6)} ${d.slice(6,9)}` : s;
+    }
+
+    function applyMobilePatientUI(user) {
+      if (!user) return;
+      currentMobilePatient = user;
+      const fmtSns = formatSns(user.snsNumber || '234891024');
+      const nameEl = document.getElementById('mobile-patient-name');
+      const snsEl = document.getElementById('mobile-patient-sns');
+      const qrSnsEl = document.getElementById('mobile-qr-sns');
+      const badgeEl = document.getElementById('mobile-avatar-badge');
+      if (nameEl) nameEl.innerText = user.displayName;
+      if (snsEl) snsEl.innerText = `Nº Utente SNS: ${fmtSns}`;
+      if (qrSnsEl) qrSnsEl.innerText = fmtSns;
+      if (badgeEl) {
+        const parts = (user.displayName || 'AS').trim().split(/\s+/);
+        badgeEl.innerText = (parts[0][0] + (parts[1] ? parts[1][0] : '')).toUpperCase();
+      }
+    }
+
+    function alertQrInfo() {
+      const fmtSns = formatSns(currentMobilePatient.snsNumber || '234891024');
+      alert(`QR Code do Utente: ${currentMobilePatient.displayName}\nSNS: ${fmtSns}\nPronto para leitura por leitor de QR Code / câmara do consultório.`);
+    }
+
+    function openMobileAuthModal() {
+      document.getElementById('mobile-auth-modal').classList.remove('hidden');
+      document.getElementById('m-auth-error').classList.add('hidden');
+      lucide.createIcons();
+    }
+    function closeMobileAuthModal() {
+      document.getElementById('mobile-auth-modal').classList.add('hidden');
+    }
+    function toggleMobileAuthMode(mode) {
+      const loginBox = document.getElementById('m-auth-login-box');
+      const regBox = document.getElementById('m-auth-register-box');
+      const tLogin = document.getElementById('m-tab-login');
+      const tReg = document.getElementById('m-tab-register');
+      if (mode === 'login') {
+        loginBox.classList.remove('hidden'); regBox.classList.add('hidden');
+        tLogin.className = 'py-1.5 rounded-lg text-xs font-bold bg-[#B8F04A] text-[#0C1416]';
+        tReg.className = 'py-1.5 rounded-lg text-xs font-bold text-[#8DA39E]';
+      } else {
+        loginBox.classList.add('hidden'); regBox.classList.remove('hidden');
+        tReg.className = 'py-1.5 rounded-lg text-xs font-bold bg-[#B8F04A] text-[#0C1416]';
+        tLogin.className = 'py-1.5 rounded-lg text-xs font-bold text-[#8DA39E]';
+      }
+    }
+
+    async function submitMobileLogin() {
+      const sns = document.getElementById('m-login-sns').value;
+      const pass = document.getElementById('m-login-pass').value;
+      const errEl = document.getElementById('m-auth-error');
+      errEl.classList.add('hidden');
+      try {
+        const res = await PulsoAPI.loginPatient({ snsNumber: sns, password: pass });
+        applyMobilePatientUI({ displayName: res.displayName, snsNumber: res.snsNumber });
+        closeMobileAuthModal();
+      } catch (e) {
+        errEl.innerText = e.message;
+        errEl.classList.remove('hidden');
+      }
+    }
+
+    async function submitMobileRegister() {
+      const sns = document.getElementById('m-reg-sns').value;
+      const name = document.getElementById('m-reg-name').value;
+      const birth = document.getElementById('m-reg-birth').value;
+      const pass = document.getElementById('m-reg-pass').value;
+      const errEl = document.getElementById('m-auth-error');
+      errEl.classList.add('hidden');
+      try {
+        const res = await PulsoAPI.registerPatient({ snsNumber: sns, fullName: name, birthDate: birth, password: pass });
+        applyMobilePatientUI({ displayName: res.displayName, snsNumber: res.snsNumber });
+        closeMobileAuthModal();
+      } catch (e) {
+        errEl.innerText = e.message;
+        errEl.classList.remove('hidden');
+      }
+    }
+
+    async function generateAccessCode() {
+      let grantData = null;
+      try {
+        // Garante sessão ativa do utente demo se ainda não autenticou manualmente
+        const me = await PulsoAPI.me();
+        if (!me.authenticated || me.role !== 'patient') {
+          await PulsoAPI.loginPatient({ snsNumber: '234891024', password: 'pulso1234' });
+        }
+        const apiRes = await PulsoAPI.createShareCode(selectedDurationKey);
+        generatedCode = apiRes.formattedCode;
+        countdownSeconds = apiRes.expiresInSeconds;
+        grantData = {
+          code: apiRes.code,
+          formattedCode: apiRes.formattedCode,
+          durationKey: apiRes.durationKey,
+          durationLabel: apiRes.durationLabel,
+          doctor: 'Dra. Marta Fernandes',
+          patient: currentMobilePatient.displayName,
+          timestamp: Date.now(),
+          expiresInSeconds: apiRes.expiresInSeconds
+        };
+      } catch (e) {
+        // Fallback offline se aberto via file://
+        const num1 = Math.floor(1000 + Math.random() * 9000);
+        const num2 = Math.floor(1000 + Math.random() * 9000);
+        generatedCode = `${num1} ${num2}`;
+        grantData = {
+          code: generatedCode.replace(/\s+/g, ''),
+          formattedCode: generatedCode,
+          durationKey: selectedDurationKey,
+          durationLabel: selectedDurationLabel,
+          doctor: 'Dra. Marta Fernandes',
+          patient: currentMobilePatient.displayName,
+          timestamp: Date.now(),
+          expiresInSeconds: countdownSeconds
+        };
+      }
+
+      document.getElementById('active-access-code').innerText = generatedCode;
+      document.getElementById('display-duration-badge').innerText = `Válido: ${selectedDurationLabel}`;
+      
+      // Transição estável no mesmo local: oculta o botão e exibe o código no mesmo slot
+      const btnWrap = document.getElementById('btn-generate-wrapper');
+      if (btnWrap) btnWrap.classList.add('hidden');
+      document.getElementById('code-display-card').classList.remove('hidden');
+
+      localStorage.setItem('pulso_active_access_grant', JSON.stringify(grantData));
+      try {
+        window.parent.postMessage({ type: 'PULSO_CODE_GENERATED', grant: grantData }, '*');
+      } catch(e) {}
+
+      startCountdown();
+      lucide.createIcons();
+    }
+
+    function startCountdown() {
+      if (countdownInterval) clearInterval(countdownInterval);
+      
+      const countdownEl = document.getElementById('countdown-text');
+      let remaining = countdownSeconds;
+
+      countdownInterval = setInterval(() => {
+        remaining--;
+        if (remaining <= 0) {
+          clearInterval(countdownInterval);
+          if (countdownEl) countdownEl.innerText = "Código expirado";
+          revokeAccessCode();
+          return;
+        }
+
+        const hours = Math.floor(remaining / 3600);
+        const mins = Math.floor((remaining % 3600) / 60);
+        const secs = remaining % 60;
+
+        let timeStr = "";
+        if (hours > 0) timeStr += `${hours}h `;
+        timeStr += `${String(mins).padStart(2, '0')}m ${String(secs).padStart(2, '0')}s`;
+
+        if (countdownEl) countdownEl.innerText = `Expira em: ${timeStr}`;
+      }, 1000);
+    }
+
+    function copyAccessCode() {
+      const plain = generatedCode.replace(/\s+/g, '');
+      navigator.clipboard.writeText(plain);
+      alert(`Código copiado: ${generatedCode}\nFaculte este código à Dra. Marta.`);
+    }
+
+    async function revokeAccessCode() {
+      const plain = (generatedCode || '').replace(/\s+/g, '');
+      if (plain) {
+        try { await PulsoAPI.revokeShareCode(plain); } catch (e) {}
+      }
+      localStorage.removeItem('pulso_active_access_grant');
+      localStorage.setItem('pulso_session_status', 'terminated');
+      document.getElementById('code-display-card').classList.add('hidden');
+      const btnWrap = document.getElementById('btn-generate-wrapper');
+      if (btnWrap) btnWrap.classList.remove('hidden');
+      if (countdownInterval) clearInterval(countdownInterval);
+      alert("Acesso médico revogado pelo utente.");
+    }
+
+    // Escutar se o computador ativou o código
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'pulso_session_status') {
+        const syncPill = document.getElementById('sync-pill');
+        if (e.newValue === 'active') {
+          if (syncPill) syncPill.classList.remove('hidden');
+        } else {
+          if (syncPill) syncPill.classList.add('hidden');
+        }
+      }
+    });
+
+    async function syncMobileWithBackend() {
+      if (!window.PulsoAPI) return;
+      try {
+        const records = await PulsoAPI.listRecords();
+        const exams = records.exams || [];
+        const listEl = document.getElementById('mobile-history-list');
+        const countEl = document.getElementById('mobile-history-count');
+        if (countEl) countEl.innerText = `${exams.length} registo${exams.length === 1 ? '' : 's'}`;
+        if (listEl) {
+          if (!exams.length) {
+            listEl.innerHTML = `<div class="p-4 rounded-2xl bg-[#131F22] border border-[#1E3338] text-xs text-[#8DA39E] text-center">Carteira vazia. Clique em Digitalizar para adicionar o primeiro exame.</div>`;
+          } else {
+            listEl.innerHTML = exams.map(ex => {
+              const isSns = (ex.source || 'SNS').toUpperCase() === 'SNS';
+              const badge = isSns
+                ? `<span class="px-2 py-0.2 rounded-full text-[9px] font-bold bg-[#14332D] text-[#5EEAD4] border border-[#5EEAD4]/30">SNS</span>`
+                : `<span class="px-2 py-0.2 rounded-full text-[9px] font-bold bg-[#1E293B] text-[#94A3B8] border border-slate-700">Privado</span>`;
+              const bio = (ex.biomarkers || []).map(b => `${b.name} ${b.value} ${b.unit || ''}`).join(' · ') || ex.notes || 'Documento';
+              return `
+                <div class="p-3.5 rounded-2xl bg-[#131F22] border border-[#1E3338] flex items-center justify-between active:scale-[0.98] transition cursor-pointer" onclick="openExamModal('${ex.title.replace(/'/g, '')}', '${ex.examDate}', '${(ex.institution || '').replace(/'/g, '')}', '${bio.replace(/'/g, '')}')">
+                  <div class="flex items-center space-x-3">
+                    <div class="w-9 h-9 rounded-xl bg-[#14332D] text-[#5EEAD4] flex items-center justify-center border border-[#5EEAD4]/20">
+                      <i data-lucide="file-check" class="w-4 h-4 text-[#B8F04A]"></i>
+                    </div>
+                    <div>
+                      <div class="flex items-center space-x-2">
+                        <h4 class="text-sm font-bold text-white">${ex.title}</h4>
+                        ${badge}
+                      </div>
+                      <p class="text-[11px] text-[#8DA39E]">${ex.examDate} · ${ex.institution || 'Clínica'}</p>
+                    </div>
+                  </div>
+                  <i data-lucide="chevron-right" class="w-4 h-4 text-[#8DA39E]"></i>
+                </div>`;
+            }).join('');
+            lucide.createIcons();
+          }
+        }
+      } catch (e) {}
+    }
+
+    function openMobileMeasurementModal() {
+      document.getElementById('mobile-meas-modal').classList.remove('hidden');
+    }
+
+    async function saveMobileMeasurement() {
+      try {
+        await PulsoAPI.createMeasurement({
+          kind: 'pressure',
+          systolic: Number(document.getElementById('mob-sys').value),
+          diastolic: Number(document.getElementById('mob-dia').value),
+          notes: document.getElementById('mob-meas-notes').value.trim(),
+          measuredAt: new Date().toISOString().slice(0, 16)
+        });
+        document.getElementById('mobile-meas-modal').classList.add('hidden');
+        alert('✅ Medição guardada na sua carteira!');
+      } catch (err) {
+        alert(err.message || 'Erro ao guardar medição.');
+      }
+    }
+
+    async function openMobileLearningModal() {
+      const modal = document.getElementById('mobile-learn-modal');
+      const list = document.getElementById('mobile-learn-list');
+      modal.classList.remove('hidden');
+      try {
+        const catalogs = await PulsoAPI.getCatalogs();
+        const topics = catalogs.learning?.topics || [];
+        list.innerHTML = topics.map(t => `
+          <div class="p-3 rounded-2xl bg-[#0C1416] border border-[#1E3338] space-y-1">
+            <span class="text-[10px] font-bold text-[#5EEAD4]">${t.categoryLabel || t.category}</span>
+            <h4 class="font-bold text-white">${t.title}</h4>
+            <p class="text-[#8DA39E] text-[11px]">${t.summary}</p>
+          </div>`).join('');
+      } catch (e) {
+        list.innerHTML = '<p class="text-[#8DA39E]">Inicie o servidor PULSO para consultar as 23 fichas educativas.</p>';
+      }
+    }
+
+    async function mobileTriggerRealUpload(file) {
+      if (!file) return;
+      try {
+        const res = await PulsoAPI.runExtraction(file);
+        const ext = res.extraction || res;
+        await PulsoAPI.createExam({
+          title: ext.title || 'Exame Digitalizado',
+          category: ext.category || 'blood_tests',
+          issuer: ext.issuer || ext.institution || 'Captura Mobile',
+          examDate: ext.examDate || new Date().toISOString().slice(0, 10),
+          summary: ext.summary || 'Digitalizado no telemóvel',
+          extractedValues: ext.extractedValues || ext.biomarkers || []
+        });
+        await syncMobileWithBackend();
+        alert(`✅ Exame "${res.title || file.name}" extraído e guardado!`);
+      } catch (err) {
+        alert(err.message || 'Erro ao processar ficheiro.');
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      switchMobileTab('share');
+      try {
+        let logged = false;
+        if (PulsoAPI.getToken()) {
+          const me = await PulsoAPI.me();
+          if (me.authenticated && me.role === 'patient' && me.user) {
+            applyMobilePatientUI(me.user);
+            logged = true;
+          }
+        }
+        if (!logged) {
+          // Auto-login demo patient para fluidez imediata na aula
+          const res = await PulsoAPI.loginPatient({ snsNumber: '234891024', password: 'pulso1234' });
+          applyMobilePatientUI({ displayName: res.displayName, snsNumber: res.snsNumber });
+        }
+        await syncMobileWithBackend();
+      } catch (e) {}
+    });
+  </script>
+</body>
+</html>

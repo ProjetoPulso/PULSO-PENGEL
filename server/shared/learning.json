@@ -1,0 +1,1126 @@
+{
+  "categories": [
+    "Análises ao sangue",
+    "Tensão arterial",
+    "Saúde respiratória",
+    "Medicação",
+    "Consultas",
+    "Prevenção"
+  ],
+  "topics": [
+    {
+      "id": "glucose",
+      "term": "Glicose",
+      "title": "Glicose: o açúcar no sangue",
+      "category": "Análises ao sangue",
+      "summary": "Percebe o que é medido num resultado de glicose.",
+      "aliases": [
+        "glicemia",
+        "glucose"
+      ],
+      "parameter": "glucose",
+      "related": [
+        "hba1c",
+        "read-results"
+      ],
+      "sources": [
+        {
+          "name": "MedlinePlus · National Library of Medicine",
+          "url": "https://medlineplus.gov/lab-tests/blood-glucose-test/",
+          "language": "en"
+        }
+      ],
+      "reviewedOn": "2026-11-08",
+      "sections": [
+        {
+          "title": "O que é",
+          "body": "É um açúcar que o organismo utiliza como fonte de energia. A análise mede a sua quantidade no sangue, também chamada glicemia."
+        },
+        {
+          "title": "Para que serve",
+          "body": "Ajuda profissionais a avaliar como o organismo gere o açúcar."
+        },
+        {
+          "title": "O que pode influenciar",
+          "body": "O momento da refeição, o jejum, algumas doenças e medicamentos podem alterar o resultado."
+        },
+        {
+          "title": "Como é utilizado na avaliação clínica",
+          "body": "É relacionada com o momento da colheita, sintomas e outras análises."
+        },
+        {
+          "title": "Antes de interpretar o resultado",
+          "body": "Valores elevados podem estar associados a dificuldades em regular o açúcar; valores baixos também têm várias causas. É necessário conhecer o contexto da análise."
+        },
+        {
+          "title": "Questões para o profissional de saúde",
+          "body": "Que contexto é importante neste resultado? É comparável aos anteriores? Preciso de esclarecer algum cuidado antes de uma nova colheita ou medição?"
+        }
+      ]
+    },
+    {
+      "id": "hba1c",
+      "term": "Hemoglobina glicada (HbA1c)",
+      "title": "O que é a HbA1c?",
+      "category": "Análises ao sangue",
+      "summary": "Uma perspetiva da glicose ao longo de dois a três meses.",
+      "aliases": [
+        "hemoglobina glicada",
+        "hemoglobina a1c"
+      ],
+      "parameter": "hba1c",
+      "related": [
+        "glucose",
+        "hemoglobin"
+      ],
+      "sources": [
+        {
+          "name": "MedlinePlus · National Library of Medicine",
+          "url": "https://medlineplus.gov/lab-tests/hemoglobin-a1c-hba1c-test/",
+          "language": "en"
+        }
+      ],
+      "reviewedOn": "2026-11-08",
+      "sections": [
+        {
+          "title": "O que é",
+          "body": "Mede a proporção de hemoglobina à qual se ligou glicose, refletindo aproximadamente os últimos dois a três meses."
+        },
+        {
+          "title": "Para que serve",
+          "body": "Complementa a medição da glicose num único momento."
+        },
+        {
+          "title": "O que pode influenciar",
+          "body": "Alterações dos glóbulos vermelhos, algumas doenças e medicamentos podem afetar a leitura."
+        },
+        {
+          "title": "Como é utilizado na avaliação clínica",
+          "body": "É avaliada com a glicemia e os fatores que podem alterar os glóbulos vermelhos."
+        },
+        {
+          "title": "Antes de interpretar o resultado",
+          "body": "Uma HbA1c mais alta pode acompanhar uma média de glicose mais elevada. Valores baixos ou inesperados precisam também de contexto; a app não define objetivos individuais."
+        },
+        {
+          "title": "Questões para o profissional de saúde",
+          "body": "Que contexto é importante neste resultado? É comparável aos anteriores? Preciso de esclarecer algum cuidado antes de uma nova colheita ou medição?"
+        }
+      ]
+    },
+    {
+      "id": "hemoglobin",
+      "term": "Hemoglobina",
+      "title": "Hemoglobina e transporte de oxigénio",
+      "category": "Análises ao sangue",
+      "summary": "Conhece uma proteína presente nos glóbulos vermelhos.",
+      "aliases": [],
+      "parameter": "hemoglobin",
+      "related": [
+        "ferritin",
+        "hba1c",
+        "spo2"
+      ],
+      "sources": [
+        {
+          "name": "MedlinePlus · National Library of Medicine",
+          "url": "https://medlineplus.gov/lab-tests/hemoglobin-test/",
+          "language": "en"
+        }
+      ],
+      "reviewedOn": "2026-11-08",
+      "sections": [
+        {
+          "title": "O que é",
+          "body": "É uma proteína dos glóbulos vermelhos que transporta oxigénio pelo corpo. Não é a mesma análise que HbA1c."
+        },
+        {
+          "title": "Para que serve",
+          "body": "Integra frequentemente o hemograma e ajuda a avaliar os glóbulos vermelhos."
+        },
+        {
+          "title": "O que pode influenciar",
+          "body": "Hidratação, perdas de sangue, nutrientes, altitude e algumas doenças podem influenciar o valor."
+        },
+        {
+          "title": "Como é utilizado na avaliação clínica",
+          "body": "É lida com os outros elementos do hemograma, o conjunto de análises às células do sangue."
+        },
+        {
+          "title": "Antes de interpretar o resultado",
+          "body": "Valores baixos podem acompanhar anemia ou perdas de sangue. Valores altos podem ter outras causas, incluindo desidratação. O resultado não identifica sozinho a causa."
+        },
+        {
+          "title": "Questões para o profissional de saúde",
+          "body": "Que contexto é importante neste resultado? É comparável aos anteriores? Preciso de esclarecer algum cuidado antes de uma nova colheita ou medição?"
+        }
+      ]
+    },
+    {
+      "id": "creatinine",
+      "term": "Creatinina",
+      "title": "O que mede a creatinina?",
+      "category": "Análises ao sangue",
+      "summary": "Compreende um dos indicadores usados na avaliação dos rins.",
+      "aliases": [],
+      "parameter": "creatinine",
+      "related": [
+        "urea",
+        "read-results"
+      ],
+      "sources": [
+        {
+          "name": "MedlinePlus · National Library of Medicine",
+          "url": "https://medlineplus.gov/lab-tests/creatinine-test/",
+          "language": "en"
+        }
+      ],
+      "reviewedOn": "2026-11-08",
+      "sections": [
+        {
+          "title": "O que é",
+          "body": "É uma substância produzida pela atividade muscular e eliminada principalmente pelos rins."
+        },
+        {
+          "title": "Para que serve",
+          "body": "É usada com outras informações para avaliar a função renal."
+        },
+        {
+          "title": "O que pode influenciar",
+          "body": "Massa muscular, alimentação, atividade física e certos medicamentos podem influenciar o resultado."
+        },
+        {
+          "title": "Como é utilizado na avaliação clínica",
+          "body": "Pode integrar a avaliação da capacidade de filtração dos rins, com outras análises e informações."
+        },
+        {
+          "title": "Antes de interpretar o resultado",
+          "body": "A creatinina depende também da massa muscular e de outros fatores. Um resultado isolado, dentro ou fora do intervalo do relatório, não confirma nem exclui doença dos rins."
+        },
+        {
+          "title": "Questões para o profissional de saúde",
+          "body": "Que contexto é importante neste resultado? É comparável aos anteriores? Preciso de esclarecer algum cuidado antes de uma nova colheita ou medição?"
+        }
+      ]
+    },
+    {
+      "id": "cholesterol_total",
+      "term": "Colesterol total",
+      "title": "Colesterol total: ver o conjunto",
+      "category": "Análises ao sangue",
+      "summary": "Um valor que reúne diferentes componentes do colesterol.",
+      "aliases": [],
+      "parameter": "cholesterol_total",
+      "related": [
+        "ldl",
+        "hdl",
+        "triglycerides"
+      ],
+      "sources": [
+        {
+          "name": "MedlinePlus · National Library of Medicine",
+          "url": "https://medlineplus.gov/lab-tests/cholesterol-levels/",
+          "language": "en"
+        }
+      ],
+      "reviewedOn": "2026-11-08",
+      "sections": [
+        {
+          "title": "O que é",
+          "body": "Resume colesterol transportado por diferentes partículas no sangue."
+        },
+        {
+          "title": "Para que serve",
+          "body": "É lido em conjunto com LDL e HDL."
+        },
+        {
+          "title": "O que pode influenciar",
+          "body": "Alimentação, hereditariedade e medicamentos podem influenciá-lo."
+        },
+        {
+          "title": "Como é utilizado na avaliação clínica",
+          "body": "Integra o perfil lipídico, um conjunto de análises às gorduras no sangue."
+        },
+        {
+          "title": "Antes de interpretar o resultado",
+          "body": "O total, alto ou baixo, não descreve sozinho o risco individual."
+        },
+        {
+          "title": "Questões para o profissional de saúde",
+          "body": "Que contexto é importante neste resultado? É comparável aos anteriores? Preciso de esclarecer algum cuidado antes de uma nova colheita ou medição?"
+        }
+      ]
+    },
+    {
+      "id": "ldl",
+      "term": "LDL",
+      "title": "O que significa colesterol LDL?",
+      "category": "Análises ao sangue",
+      "summary": "Conhece uma das partículas que transportam colesterol.",
+      "aliases": [
+        "colesterol ldl"
+      ],
+      "parameter": "ldl",
+      "related": [
+        "hdl",
+        "cholesterol_total"
+      ],
+      "sources": [
+        {
+          "name": "MedlinePlus · Colesterol LDL",
+          "url": "https://medlineplus.gov/ldlthebadcholesterol.html",
+          "language": "en"
+        }
+      ],
+      "reviewedOn": "2026-11-08",
+      "sections": [
+        {
+          "title": "O que é",
+          "body": "LDL transporta colesterol no sangue."
+        },
+        {
+          "title": "Para que serve",
+          "body": "Quantidade excessiva pode favorecer depósitos nas artérias."
+        },
+        {
+          "title": "O que pode influenciar",
+          "body": "Hereditariedade, alimentação e medicamentos podem influenciá-lo."
+        },
+        {
+          "title": "Como é utilizado na avaliação clínica",
+          "body": "É avaliado com os outros componentes do perfil lipídico e o contexto da pessoa."
+        },
+        {
+          "title": "Antes de interpretar o resultado",
+          "body": "Uma elevação merece contextualização; um valor baixo não garante ausência de risco cardiovascular."
+        },
+        {
+          "title": "Questões para o profissional de saúde",
+          "body": "Que contexto é importante neste resultado? É comparável aos anteriores? Preciso de esclarecer algum cuidado antes de uma nova colheita ou medição?"
+        }
+      ]
+    },
+    {
+      "id": "hdl",
+      "term": "HDL",
+      "title": "O que é o colesterol HDL?",
+      "category": "Análises ao sangue",
+      "summary": "Uma peça do perfil de gorduras no sangue.",
+      "aliases": [
+        "colesterol hdl"
+      ],
+      "parameter": "hdl",
+      "related": [
+        "ldl",
+        "cholesterol_total"
+      ],
+      "sources": [
+        {
+          "name": "MedlinePlus · Colesterol HDL",
+          "url": "https://medlineplus.gov/hdlthegoodcholesterol.html",
+          "language": "en"
+        }
+      ],
+      "reviewedOn": "2026-11-08",
+      "sections": [
+        {
+          "title": "O que é",
+          "body": "HDL participa no transporte de colesterol de volta ao fígado."
+        },
+        {
+          "title": "Para que serve",
+          "body": "É avaliado com outros indicadores cardiovasculares."
+        },
+        {
+          "title": "O que pode influenciar",
+          "body": "Hereditariedade, atividade física e medicamentos podem influenciá-lo."
+        },
+        {
+          "title": "Como é utilizado na avaliação clínica",
+          "body": "É avaliado com os outros componentes do perfil lipídico e o contexto da pessoa."
+        },
+        {
+          "title": "Antes de interpretar o resultado",
+          "body": "Um HDL baixo pode acompanhar maior risco. Um valor alto não deve ser usado isoladamente como garantia de proteção."
+        },
+        {
+          "title": "Questões para o profissional de saúde",
+          "body": "Que contexto é importante neste resultado? É comparável aos anteriores? Preciso de esclarecer algum cuidado antes de uma nova colheita ou medição?"
+        }
+      ]
+    },
+    {
+      "id": "triglycerides",
+      "term": "Triglicéridos",
+      "title": "Triglicéridos: energia em reserva",
+      "category": "Análises ao sangue",
+      "summary": "Outro tipo de gordura medido nas análises.",
+      "aliases": [],
+      "parameter": "triglycerides",
+      "related": [
+        "ldl",
+        "cholesterol_total"
+      ],
+      "sources": [
+        {
+          "name": "MedlinePlus · National Library of Medicine",
+          "url": "https://medlineplus.gov/lab-tests/triglycerides-test/",
+          "language": "en"
+        }
+      ],
+      "reviewedOn": "2026-11-08",
+      "sections": [
+        {
+          "title": "O que é",
+          "body": "São gorduras que o organismo utiliza e armazena como energia."
+        },
+        {
+          "title": "Para que serve",
+          "body": "Fazem parte da avaliação das gorduras no sangue."
+        },
+        {
+          "title": "O que pode influenciar",
+          "body": "Refeições, álcool, hereditariedade, certas doenças e medicamentos podem influenciar o resultado."
+        },
+        {
+          "title": "Como é utilizado na avaliação clínica",
+          "body": "É avaliado no perfil lipídico, juntamente com colesterol total, LDL e HDL."
+        },
+        {
+          "title": "Antes de interpretar o resultado",
+          "body": "Valores elevados podem acompanhar maior risco cardiovascular e ter outras implicações. Valores baixos também precisam de contexto."
+        },
+        {
+          "title": "Questões para o profissional de saúde",
+          "body": "Que contexto é importante neste resultado? É comparável aos anteriores? Preciso de esclarecer algum cuidado antes de uma nova colheita ou medição?"
+        }
+      ]
+    },
+    {
+      "id": "ferritin",
+      "term": "Ferritina",
+      "title": "Ferritina e reservas de ferro",
+      "category": "Análises ao sangue",
+      "summary": "Conhece uma proteína que armazena ferro.",
+      "aliases": [],
+      "parameter": "ferritin",
+      "related": [
+        "hemoglobin",
+        "read-results"
+      ],
+      "sources": [
+        {
+          "name": "MedlinePlus · National Library of Medicine",
+          "url": "https://medlineplus.gov/lab-tests/ferritin-blood-test/",
+          "language": "en"
+        }
+      ],
+      "reviewedOn": "2026-11-08",
+      "sections": [
+        {
+          "title": "O que é",
+          "body": "A ferritina é uma proteína que armazena ferro no organismo."
+        },
+        {
+          "title": "Para que serve",
+          "body": "Ajuda a avaliar as reservas de ferro em conjunto com outros exames."
+        },
+        {
+          "title": "O que pode influenciar",
+          "body": "Inflamação, doenças do fígado e medicamentos podem afetar o resultado."
+        },
+        {
+          "title": "Como é utilizado na avaliação clínica",
+          "body": "É relacionada com o hemograma e outros indicadores do ferro e de inflamação."
+        },
+        {
+          "title": "Antes de interpretar o resultado",
+          "body": "Valores baixos podem indicar reservas reduzidas. Uma ferritina elevada pode ter várias causas, incluindo inflamação."
+        },
+        {
+          "title": "Questões para o profissional de saúde",
+          "body": "Que contexto é importante neste resultado? É comparável aos anteriores? Preciso de esclarecer algum cuidado antes de uma nova colheita ou medição?"
+        }
+      ]
+    },
+    {
+      "id": "tsh",
+      "term": "TSH",
+      "title": "TSH: um sinal para a tiroide",
+      "category": "Análises ao sangue",
+      "summary": "Como o organismo regula a produção de hormonas tiroideias.",
+      "aliases": [],
+      "parameter": "tsh",
+      "related": [
+        "ft4",
+        "read-results"
+      ],
+      "sources": [
+        {
+          "name": "MedlinePlus · National Library of Medicine",
+          "url": "https://medlineplus.gov/lab-tests/tsh-thyroid-stimulating-hormone-test/",
+          "language": "en"
+        }
+      ],
+      "reviewedOn": "2026-11-08",
+      "sections": [
+        {
+          "title": "O que é",
+          "body": "É uma hormona produzida pela hipófise que estimula a tiroide."
+        },
+        {
+          "title": "Para que serve",
+          "body": "Ajuda a avaliar o funcionamento da tiroide, muitas vezes com a T4 livre."
+        },
+        {
+          "title": "O que pode influenciar",
+          "body": "Medicamentos, gravidez, idade e outras doenças podem afetar o resultado."
+        },
+        {
+          "title": "Como é utilizado na avaliação clínica",
+          "body": "É avaliada com T4 livre e informação sobre sintomas e medicamentos."
+        },
+        {
+          "title": "Antes de interpretar o resultado",
+          "body": "Uma TSH alta ou baixa pode ter várias explicações. É necessário relacioná-la com outras hormonas, medicamentos e o contexto da pessoa."
+        },
+        {
+          "title": "Questões para o profissional de saúde",
+          "body": "Que contexto é importante neste resultado? É comparável aos anteriores? Preciso de esclarecer algum cuidado antes de uma nova colheita ou medição?"
+        }
+      ]
+    },
+    {
+      "id": "ft4",
+      "term": "T4 livre",
+      "title": "T4 livre: uma hormona da tiroide",
+      "category": "Análises ao sangue",
+      "summary": "Distingue T4 livre de T4 total.",
+      "aliases": [
+        "ft4",
+        "tiroxina"
+      ],
+      "parameter": "ft4",
+      "related": [
+        "tsh"
+      ],
+      "sources": [
+        {
+          "name": "MedlinePlus · National Library of Medicine",
+          "url": "https://medlineplus.gov/lab-tests/thyroxine-t4-test/",
+          "language": "en"
+        }
+      ],
+      "reviewedOn": "2026-11-08",
+      "sections": [
+        {
+          "title": "O que é",
+          "body": "É a parte da hormona T4 que circula sem estar ligada a proteínas e está disponível para os tecidos."
+        },
+        {
+          "title": "Para que serve",
+          "body": "É interpretada em conjunto com TSH e outras informações."
+        },
+        {
+          "title": "O que pode influenciar",
+          "body": "Medicamentos, suplementos e alterações da tiroide podem influenciar o resultado."
+        },
+        {
+          "title": "Como é utilizado na avaliação clínica",
+          "body": "É avaliada com TSH, distinguindo T4 livre de T4 total."
+        },
+        {
+          "title": "Antes de interpretar o resultado",
+          "body": "Valores altos ou baixos podem acompanhar alterações da produção hormonal, mas não permitem identificar sozinhos a causa."
+        },
+        {
+          "title": "Questões para o profissional de saúde",
+          "body": "Que contexto é importante neste resultado? É comparável aos anteriores? Preciso de esclarecer algum cuidado antes de uma nova colheita ou medição?"
+        }
+      ]
+    },
+    {
+      "id": "vitamin_d",
+      "term": "Vitamina D",
+      "title": "Vitamina D: o que mostra a análise?",
+      "category": "Análises ao sangue",
+      "summary": "Conhece a forma habitualmente medida no sangue.",
+      "aliases": [
+        "25-oh",
+        "25(oh)d"
+      ],
+      "parameter": "vitamin_d",
+      "related": [
+        "read-results"
+      ],
+      "sources": [
+        {
+          "name": "MedlinePlus · National Library of Medicine",
+          "url": "https://medlineplus.gov/lab-tests/vitamin-d-test/",
+          "language": "en"
+        }
+      ],
+      "reviewedOn": "2026-11-08",
+      "sections": [
+        {
+          "title": "O que é",
+          "body": "A análise mede habitualmente a 25-hidroxivitamina D, uma forma que circula no sangue."
+        },
+        {
+          "title": "Para que serve",
+          "body": "Ajuda na avaliação da disponibilidade de vitamina D, importante para ossos e outras funções."
+        },
+        {
+          "title": "O que pode influenciar",
+          "body": "Exposição solar, alimentação, absorção e suplementos podem influenciar o resultado."
+        },
+        {
+          "title": "Como é utilizado na avaliação clínica",
+          "body": "A utilidade depende do motivo da análise e da avaliação feita pela equipa de saúde."
+        },
+        {
+          "title": "Antes de interpretar o resultado",
+          "body": "Valores baixos podem indicar disponibilidade reduzida. Valores elevados podem relacionar-se com excesso de suplementação."
+        },
+        {
+          "title": "Questões para o profissional de saúde",
+          "body": "Que contexto é importante neste resultado? É comparável aos anteriores? Preciso de esclarecer algum cuidado antes de uma nova colheita ou medição?"
+        }
+      ]
+    },
+    {
+      "id": "urea",
+      "term": "Ureia",
+      "title": "Ureia: um produto de eliminação",
+      "category": "Análises ao sangue",
+      "summary": "Uma substância avaliada com outros indicadores dos rins.",
+      "aliases": [],
+      "parameter": "urea",
+      "related": [
+        "creatinine",
+        "sodium"
+      ],
+      "sources": [
+        {
+          "name": "North West London Pathology · Ureia",
+          "url": "https://www.nwlpathology.nhs.uk/test/urea/",
+          "language": "en"
+        }
+      ],
+      "reviewedOn": "2026-11-08",
+      "sections": [
+        {
+          "title": "O que é",
+          "body": "É formada durante o processamento das proteínas e eliminada sobretudo pelos rins."
+        },
+        {
+          "title": "Para que serve",
+          "body": "Pode integrar uma avaliação renal juntamente com creatinina e outros indicadores."
+        },
+        {
+          "title": "O que pode influenciar",
+          "body": "Hidratação, ingestão de proteínas e situações de maior degradação de tecidos podem influenciá-la."
+        },
+        {
+          "title": "Como é utilizado na avaliação clínica",
+          "body": "É lida com outros indicadores dos rins e o estado de hidratação."
+        },
+        {
+          "title": "Antes de interpretar o resultado",
+          "body": "Uma elevação ou redução tem várias explicações. A ureia isolada não permite concluir como estão os rins."
+        },
+        {
+          "title": "Questões para o profissional de saúde",
+          "body": "Que contexto é importante neste resultado? É comparável aos anteriores? Preciso de esclarecer algum cuidado antes de uma nova colheita ou medição?"
+        }
+      ]
+    },
+    {
+      "id": "sodium",
+      "term": "Sódio",
+      "title": "Sódio e equilíbrio de líquidos",
+      "category": "Análises ao sangue",
+      "summary": "Uma análise diferente da quantidade de sal que comes.",
+      "aliases": [],
+      "parameter": "sodium",
+      "related": [
+        "potassium",
+        "creatinine"
+      ],
+      "sources": [
+        {
+          "name": "MedlinePlus · National Library of Medicine",
+          "url": "https://medlineplus.gov/lab-tests/sodium-blood-test/",
+          "language": "en"
+        }
+      ],
+      "reviewedOn": "2026-11-08",
+      "sections": [
+        {
+          "title": "O que é",
+          "body": "É um mineral que participa no equilíbrio de líquidos e na atividade de nervos e músculos."
+        },
+        {
+          "title": "Para que serve",
+          "body": "Ajuda a avaliar o equilíbrio de água e sais do organismo."
+        },
+        {
+          "title": "O que pode influenciar",
+          "body": "Alterações de hidratação, funcionamento dos rins e medicamentos podem influenciar o resultado."
+        },
+        {
+          "title": "Como é utilizado na avaliação clínica",
+          "body": "Integra a avaliação do equilíbrio de sais e da função dos rins."
+        },
+        {
+          "title": "Antes de interpretar o resultado",
+          "body": "Valores altos ou baixos podem refletir alterações do equilíbrio de líquidos ou outras situações."
+        },
+        {
+          "title": "Questões para o profissional de saúde",
+          "body": "Que contexto é importante neste resultado? É comparável aos anteriores? Preciso de esclarecer algum cuidado antes de uma nova colheita ou medição?"
+        }
+      ]
+    },
+    {
+      "id": "potassium",
+      "term": "Potássio",
+      "title": "Potássio: um mineral essencial",
+      "category": "Análises ao sangue",
+      "summary": "Conhece o papel do potássio nos músculos e no coração.",
+      "aliases": [],
+      "parameter": "potassium",
+      "related": [
+        "sodium",
+        "creatinine"
+      ],
+      "sources": [
+        {
+          "name": "MedlinePlus · National Library of Medicine",
+          "url": "https://medlineplus.gov/lab-tests/potassium-blood-test/",
+          "language": "en"
+        }
+      ],
+      "reviewedOn": "2026-11-08",
+      "sections": [
+        {
+          "title": "O que é",
+          "body": "É um mineral importante para o funcionamento dos nervos, músculos e coração."
+        },
+        {
+          "title": "Para que serve",
+          "body": "A análise ajuda a avaliar o equilíbrio deste mineral no sangue."
+        },
+        {
+          "title": "O que pode influenciar",
+          "body": "Função renal, medicamentos e condições da amostra podem afetar o valor."
+        },
+        {
+          "title": "Como é utilizado na avaliação clínica",
+          "body": "Integra a avaliação do equilíbrio de sais e da função dos rins."
+        },
+        {
+          "title": "Antes de interpretar o resultado",
+          "body": "Valores altos e baixos podem ter várias causas e afetar a atividade muscular e cardíaca."
+        },
+        {
+          "title": "Questões para o profissional de saúde",
+          "body": "Que contexto é importante neste resultado? É comparável aos anteriores? Preciso de esclarecer algum cuidado antes de uma nova colheita ou medição?"
+        }
+      ]
+    },
+    {
+      "id": "systolic",
+      "term": "Tensão sistólica",
+      "title": "Tensão sistólica: o primeiro número",
+      "category": "Tensão arterial",
+      "summary": "O primeiro número de uma leitura de tensão arterial.",
+      "aliases": [
+        "sistólica",
+        "pressão sistólica"
+      ],
+      "parameter": "systolic",
+      "related": [
+        "diastolic",
+        "measure-pressure"
+      ],
+      "sources": [
+        {
+          "name": "NHS · Medição da tensão arterial",
+          "url": "https://www.nhs.uk/tests-and-treatments/blood-pressure-test/",
+          "language": "en"
+        }
+      ],
+      "reviewedOn": "2026-11-08",
+      "sections": [
+        {
+          "title": "O que é",
+          "body": "É a pressão nas artérias durante a contração do coração."
+        },
+        {
+          "title": "Para que serve",
+          "body": "É registada com a tensão diastólica, em milímetros de mercúrio (mmHg)."
+        },
+        {
+          "title": "O que pode influenciar",
+          "body": "Posição do braço, movimento e forma de medir podem alterar a leitura."
+        },
+        {
+          "title": "Como é utilizado na avaliação clínica",
+          "body": "As duas pressões são consideradas em conjunto, com a técnica de medição e o contexto."
+        },
+        {
+          "title": "Antes de interpretar o resultado",
+          "body": "Valores altos ou baixos precisam de contexto; uma leitura não é uma avaliação completa."
+        },
+        {
+          "title": "Questões para o profissional de saúde",
+          "body": "Que contexto é importante neste resultado? É comparável aos anteriores? Preciso de esclarecer algum cuidado antes de uma nova colheita ou medição?"
+        }
+      ]
+    },
+    {
+      "id": "diastolic",
+      "term": "Tensão diastólica",
+      "title": "Tensão diastólica: o segundo número",
+      "category": "Tensão arterial",
+      "summary": "O segundo número de uma leitura de tensão arterial.",
+      "aliases": [
+        "diastólica",
+        "pressão diastólica"
+      ],
+      "parameter": "diastolic",
+      "related": [
+        "systolic",
+        "measure-pressure"
+      ],
+      "sources": [
+        {
+          "name": "NHS · Medição da tensão arterial",
+          "url": "https://www.nhs.uk/tests-and-treatments/blood-pressure-test/",
+          "language": "en"
+        }
+      ],
+      "reviewedOn": "2026-11-08",
+      "sections": [
+        {
+          "title": "O que é",
+          "body": "É a pressão nas artérias quando o coração relaxa entre batimentos."
+        },
+        {
+          "title": "Para que serve",
+          "body": "Completa a leitura da tensão sistólica, em milímetros de mercúrio (mmHg)."
+        },
+        {
+          "title": "O que pode influenciar",
+          "body": "A técnica e o contexto da medição influenciam o resultado."
+        },
+        {
+          "title": "Como é utilizado na avaliação clínica",
+          "body": "As duas pressões são consideradas em conjunto, com a técnica de medição e o contexto."
+        },
+        {
+          "title": "Antes de interpretar o resultado",
+          "body": "Valores altos ou baixos não identificam sozinhos uma causa."
+        },
+        {
+          "title": "Questões para o profissional de saúde",
+          "body": "Que contexto é importante neste resultado? É comparável aos anteriores? Preciso de esclarecer algum cuidado antes de uma nova colheita ou medição?"
+        }
+      ]
+    },
+    {
+      "id": "heart_rate",
+      "term": "Frequência cardíaca",
+      "title": "Frequência cardíaca e pulsação",
+      "category": "Tensão arterial",
+      "summary": "O número de batimentos do coração por minuto.",
+      "aliases": [
+        "pulsação",
+        "batimentos",
+        "bpm"
+      ],
+      "parameter": "heart_rate",
+      "related": [
+        "systolic",
+        "diastolic"
+      ],
+      "sources": [
+        {
+          "name": "MedlinePlus · Pulsação",
+          "url": "https://medlineplus.gov/ency/article/003399.htm",
+          "language": "en"
+        }
+      ],
+      "reviewedOn": "2026-11-08",
+      "sections": [
+        {
+          "title": "O que é",
+          "body": "Expressa quantas vezes o coração bate num minuto; é apresentada em bpm."
+        },
+        {
+          "title": "Para que serve",
+          "body": "Ajuda a descrever o ritmo dos batimentos no momento da medição."
+        },
+        {
+          "title": "O que pode influenciar",
+          "body": "Atividade física, repouso e algumas condições ou medicamentos podem influenciar a pulsação."
+        },
+        {
+          "title": "Como é utilizado na avaliação clínica",
+          "body": "É considerada com o contexto de repouso ou esforço e a regularidade dos batimentos."
+        },
+        {
+          "title": "Antes de interpretar o resultado",
+          "body": "Uma frequência mais alta ou mais baixa pode ter várias explicações."
+        },
+        {
+          "title": "Questões para o profissional de saúde",
+          "body": "Que contexto é importante neste resultado? É comparável aos anteriores? Preciso de esclarecer algum cuidado antes de uma nova colheita ou medição?"
+        }
+      ]
+    },
+    {
+      "id": "spo2",
+      "term": "SpO₂",
+      "title": "O que é SpO₂?",
+      "category": "Saúde respiratória",
+      "summary": "Uma estimativa do oxigénio transportado no sangue.",
+      "aliases": [
+        "spo2",
+        "saturação de oxigénio",
+        "oxímetro"
+      ],
+      "parameter": "spo2",
+      "related": [
+        "hemoglobin"
+      ],
+      "sources": [
+        {
+          "name": "MHRA · Limitações dos oxímetros",
+          "url": "https://www.gov.uk/guidance/the-use-and-regulation-of-pulse-oximeters-information-for-healthcare-professionals",
+          "language": "en"
+        }
+      ],
+      "reviewedOn": "2026-11-08",
+      "sections": [
+        {
+          "title": "O que é",
+          "body": "É uma estimativa, em percentagem, da saturação de oxigénio da hemoglobina, obtida por um oxímetro."
+        },
+        {
+          "title": "Para que serve",
+          "body": "Pode ajudar profissionais a acompanhar a oxigenação. Não mede dióxido de carbono nem substitui a avaliação da respiração."
+        },
+        {
+          "title": "O que pode influenciar",
+          "body": "Movimento, mãos frias, verniz, colocação do sensor e pigmentação da pele podem influenciar a precisão."
+        },
+        {
+          "title": "Como é utilizado na avaliação clínica",
+          "body": "É relacionada com a observação da respiração e as limitações do aparelho."
+        },
+        {
+          "title": "Antes de interpretar o resultado",
+          "body": "Uma leitura mais baixa pode refletir menor oxigenação ou erro de medição."
+        },
+        {
+          "title": "Questões para o profissional de saúde",
+          "body": "Que contexto é importante neste resultado? É comparável aos anteriores? Preciso de esclarecer algum cuidado antes de uma nova colheita ou medição?"
+        }
+      ]
+    },
+    {
+      "id": "measure-pressure",
+      "term": "Como medir a tensão arterial?",
+      "title": "Como medir a tensão arterial?",
+      "category": "Tensão arterial",
+      "summary": "Pequenos cuidados ajudam a tornar os registos mais consistentes.",
+      "aliases": [],
+      "parameter": null,
+      "related": [
+        "systolic",
+        "diastolic"
+      ],
+      "sources": [
+        {
+          "name": "Fundação Portuguesa de Cardiologia",
+          "url": "https://www.fpcardiologia.pt/como-medir-pressao-arterial/",
+          "language": "pt"
+        },
+        {
+          "name": "NHS · Medição da tensão arterial",
+          "url": "https://www.nhs.uk/tests-and-treatments/blood-pressure-test/",
+          "language": "en"
+        }
+      ],
+      "reviewedOn": "2026-11-08",
+      "sections": [
+        {
+          "title": "O que é",
+          "body": "Pequenos cuidados ajudam a tornar os registos mais consistentes."
+        },
+        {
+          "title": "Para que serve",
+          "body": "Segue as instruções do aparelho e da equipa que acompanha as medições. Senta-te com as costas apoiadas e os pés no chão."
+        },
+        {
+          "title": "Pontos a ter em conta",
+          "body": "Apoia o braço, coloca a braçadeira sobre a pele e mantém-te relaxado, sem falar. Regista os dois números e a data."
+        },
+        {
+          "title": "Como é usado nos cuidados de saúde",
+          "body": "Ajuda a organizar informação e dúvidas para conversar com a equipa de saúde."
+        },
+        {
+          "title": "Antes de usar esta informação",
+          "body": "Confirma com um profissional quando e quantas vezes medir. O PULSO organiza os registos; não decide se uma leitura é segura."
+        },
+        {
+          "title": "Questões para o profissional de saúde",
+          "body": "O que devo preparar? Que informação falta? Como posso confirmar que compreendi o que ficou combinado?"
+        }
+      ]
+    },
+    {
+      "id": "medicine-list",
+      "term": "Levar uma lista de medicação",
+      "title": "Levar uma lista de medicação",
+      "category": "Medicação",
+      "summary": "Prepara informação útil para conversar com o médico ou farmacêutico.",
+      "aliases": [],
+      "parameter": null,
+      "related": [
+        "prepare-visit"
+      ],
+      "sources": [
+        {
+          "name": "INFARMED · Folheto informativo",
+          "url": "https://www.infarmed.pt/",
+          "language": "pt"
+        }
+      ],
+      "reviewedOn": "2026-11-08",
+      "sections": [
+        {
+          "title": "O que é",
+          "body": "Prepara informação útil para conversar com o médico ou farmacêutico."
+        },
+        {
+          "title": "Para que serve",
+          "body": "Anota os medicamentos que utilizas, incluindo os sem receita, vitaminas e suplementos, e como os estás a tomar."
+        },
+        {
+          "title": "Pontos a ter em conta",
+          "body": "Leva dúvidas sobre as instruções e dificuldades de utilização. Refere alergias e alterações recentes."
+        },
+        {
+          "title": "Como é usado nos cuidados de saúde",
+          "body": "Ajuda a organizar informação e dúvidas para conversar com a equipa de saúde."
+        },
+        {
+          "title": "Antes de usar esta informação",
+          "body": "Esta lista ajuda a comunicar. Não é uma recomendação para iniciar, suspender ou ajustar medicamentos."
+        },
+        {
+          "title": "Questões para o profissional de saúde",
+          "body": "O que devo preparar? Que informação falta? Como posso confirmar que compreendi o que ficou combinado?"
+        }
+      ]
+    },
+    {
+      "id": "prepare-visit",
+      "term": "Como preparar uma consulta médica?",
+      "title": "Como preparar uma consulta médica?",
+      "category": "Consultas",
+      "summary": "Leva as perguntas certas e encontra mais facilmente a tua informação.",
+      "aliases": [],
+      "parameter": null,
+      "related": [
+        "medicine-list",
+        "read-results"
+      ],
+      "sources": [
+        {
+          "name": "DGS · Literacia em saúde",
+          "url": "https://www.dgs.pt/paginas-de-sistema/saude-de-a-a-z/literacia-em-saude.aspx",
+          "language": "pt"
+        }
+      ],
+      "reviewedOn": "2026-11-08",
+      "sections": [
+        {
+          "title": "O que é",
+          "body": "Leva as perguntas certas e encontra mais facilmente a tua informação."
+        },
+        {
+          "title": "Para que serve",
+          "body": "Escreve as tuas principais dúvidas e reúne os relatórios e a lista de medicação que queres discutir."
+        },
+        {
+          "title": "Pontos a ter em conta",
+          "body": "Descreve as tuas preocupações com clareza. Pede explicação de palavras que não compreendes e toma notas se te ajudar."
+        },
+        {
+          "title": "Como é usado nos cuidados de saúde",
+          "body": "Ajuda a organizar informação e dúvidas para conversar com a equipa de saúde."
+        },
+        {
+          "title": "Antes de usar esta informação",
+          "body": "Confirma o que ficou combinado e como esclarecer dúvidas depois."
+        },
+        {
+          "title": "Questões para o profissional de saúde",
+          "body": "O que devo preparar? Que informação falta? Como posso confirmar que compreendi o que ficou combinado?"
+        }
+      ]
+    },
+    {
+      "id": "read-results",
+      "term": "Como ler um relatório sem tirar conclusões precipitadas?",
+      "title": "Como ler um relatório sem tirar conclusões precipitadas?",
+      "category": "Prevenção",
+      "summary": "Distingue resultado, referência do laboratório e histórico pessoal.",
+      "aliases": [],
+      "parameter": null,
+      "related": [
+        "glucose",
+        "prepare-visit"
+      ],
+      "sources": [
+        {
+          "name": "MedlinePlus · National Library of Medicine",
+          "url": "https://medlineplus.gov/lab-tests/how-to-understand-your-lab-results/",
+          "language": "en"
+        }
+      ],
+      "reviewedOn": "2026-11-08",
+      "sections": [
+        {
+          "title": "O que é",
+          "body": "Distingue resultado, referência do laboratório e histórico pessoal."
+        },
+        {
+          "title": "Para que serve",
+          "body": "O resultado é o valor medido. O intervalo de referência pertence ao laboratório e ao método; não é um objetivo personalizado."
+        },
+        {
+          "title": "Pontos a ter em conta",
+          "body": "Confere datas, unidades e métodos. Um valor fora do intervalo pode ter várias explicações."
+        },
+        {
+          "title": "Como é usado nos cuidados de saúde",
+          "body": "O histórico mostra registos anteriores, sem garantir segurança."
+        },
+        {
+          "title": "Antes de usar esta informação",
+          "body": "Usa as explicações para preparar dúvidas. A interpretação dos resultados exige contexto e conversa com um profissional de saúde."
+        },
+        {
+          "title": "Questões para o profissional de saúde",
+          "body": "O que devo preparar? Que informação falta? Como posso confirmar que compreendi o que ficou combinado?"
+        }
+      ]
+    }
+  ]
+}

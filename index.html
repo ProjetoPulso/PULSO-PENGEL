@@ -1,0 +1,2425 @@
+<!DOCTYPE html>
+<html lang="pt" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PULSO Clínico — Portal da Médica & Consulta</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- PULSO Unified API Client -->
+  <script src="pulso_app.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            oled: '#0C1416',
+            surface: '#131F22',
+            surfaceLight: '#162529',
+            surfaceBorder: '#1E3338',
+            surfaceBorderHover: '#2A464D',
+            neon: '#B8F04A',
+            neonHover: '#C9F762',
+            textPrimary: '#F1F5F9',
+            textSecondary: '#8DA39E',
+            textMuted: '#5F7571',
+            badgeSnsBg: '#14332D',
+            badgeSnsText: '#5EEAD4',
+            badgePrivBg: '#1E293B',
+            badgePrivText: '#94A3B8',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+    
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #0C1416;
+      background-image: 
+        radial-gradient(circle at 50% 0%, rgba(184, 240, 74, 0.08) 0%, transparent 60%),
+        radial-gradient(circle at 90% 20%, rgba(20, 51, 45, 0.25) 0%, transparent 50%);
+      background-attachment: fixed;
+    }
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .neon-glow {
+      box-shadow: 0 0 20px rgba(184, 240, 74, 0.25);
+    }
+    .neon-pulse {
+      animation: neonPulse 2s infinite ease-in-out;
+    }
+    @keyframes neonPulse {
+      0%, 100% { box-shadow: 0 0 15px rgba(184, 240, 74, 0.25); }
+      50% { box-shadow: 0 0 30px rgba(184, 240, 74, 0.55); }
+    }
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0C1416;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1E3338;
+      border-radius: 4px;
+    }
+    /* Tema Claro (Light Mode) */
+    html.light body {
+      background: #F4F7F6 !important;
+      color: #0F172A !important;
+    }
+    html.light header, html.light nav, html.light footer {
+      background: #FFFFFF !important;
+      border-color: #E2E8F0 !important;
+    }
+    html.light .bg-\[\#131F22\], html.light .bg-\[\#0C1416\], html.light .bg-\[\#162529\], html.light .bg-\[\#090F11\]\/90, html.light .bg-\[\#181D1A\] {
+      background-color: #FFFFFF !important;
+      color: #0F172A !important;
+    }
+    html.light .border-\[\#1E3338\], html.light .border-\[\#2A3E33\] {
+      border-color: #CBD5E1 !important;
+    }
+    html.light .text-white {
+      color: #0F172A !important;
+    }
+    html.light .text-\[\#8DA39E\], html.light .text-\[\#5F7571\] {
+      color: #475569 !important;
+    }
+    html.light .bg-\[\#B8F04A\], html.light .text-\[\#0C1416\] {
+      color: #0C1416 !important;
+    }
+    html.light .text-\[\#B8F04A\] {
+      color: #15803D !important;
+    }
+    /* Modo Experiência Simples */
+    body.mode-simple .detail-only {
+      display: none !important;
+    }
+    body.mode-balanced .detailed-only {
+      display: none !important;
+    }
+  </style>
+</head>
+<body class="text-[#E4ECE8] min-h-screen flex flex-col selection:bg-[#B8F04A] selection:text-[#0C1416]">
+
+  <!-- Header Superior Escuro OLED: Portal Clínico da Médica -->
+  <header class="bg-[#090F11]/90 backdrop-blur-md border-b border-[#1E3338] sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      
+      <!-- Marca PULSO Clínico -->
+      <div class="flex items-center space-x-3">
+        <div class="w-9 h-9 rounded-xl bg-[#13231F] border border-[#B8F04A]/30 flex items-center justify-center text-[#B8F04A] shadow-[0_0_12px_rgba(184,240,74,0.2)]">
+          <i data-lucide="stethoscope" class="w-5 h-5"></i>
+        </div>
+        <div class="flex items-baseline space-x-2">
+          <span class="text-xl font-extrabold tracking-wider text-white">PULSO <span class="text-[#B8F04A] text-sm font-bold">Clínico</span></span>
+          <span class="hidden sm:inline-block text-[11px] px-2 py-0.5 rounded-full bg-[#14231E] text-[#B8F04A] font-semibold border border-[#B8F04A]/30">
+            SNS · USF São João
+          </span>
+        </div>
+      </div>
+
+      <!-- Informação da Médica/Paciente & Estado do Acesso -->
+      <div class="flex items-center space-x-3">
+        
+        <!-- Controlo de Experiência & Tema -->
+        <div class="hidden lg:flex items-center space-x-1.5 bg-[#131F22] border border-[#1E3338] rounded-full px-2 py-1">
+          <select id="experience-mode-select" onchange="changeExperienceMode(this.value)" class="bg-transparent text-[11px] font-semibold text-[#8DA39E] focus:outline-none cursor-pointer" title="Nível de detalhe">
+            <option value="simple" class="bg-[#131F22] text-white">Simples</option>
+            <option value="balanced" selected class="bg-[#131F22] text-white">Equilibrado</option>
+            <option value="detailed" class="bg-[#131F22] text-white">Detalhado</option>
+          </select>
+          <span class="text-[#1E3338]">|</span>
+          <button onclick="toggleTheme()" id="theme-toggle-btn" class="text-[11px] text-[#B8F04A] hover:text-white px-1.5 py-0.5 rounded-full transition flex items-center space-x-1" title="Alternar Tema Claro/Escuro">
+            <i data-lucide="sun-moon" class="w-3.5 h-3.5"></i>
+            <span id="theme-label">Escuro</span>
+          </button>
+        </div>
+
+        <!-- Link Rápido para a App Telemóvel -->
+        <a href="mobile.html" target="_blank" class="hidden sm:inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-[#131F22] hover:bg-[#162529] border border-[#1E3338] text-xs font-semibold text-[#8DA39E] hover:text-white transition">
+          <i data-lucide="smartphone" class="w-3.5 h-3.5 text-[#B8F04A]"></i>
+          <span>App Telemóvel</span>
+        </a>
+
+        <!-- Identificação Dinâmica (Médica ou Utente) -->
+        <div class="flex items-center space-x-3 border-l border-[#1E3338] pl-3">
+          <div class="text-right hidden sm:block">
+            <p id="header-user-name" class="font-bold text-white text-xs leading-tight">Portal PULSO</p>
+            <p id="header-user-sub" class="text-[10px] text-[#8DA39E]">Acesso Clínico & Utente</p>
+          </div>
+          <div id="header-user-avatar" class="w-9 h-9 rounded-full bg-[#14261F] text-[#B8F04A] font-extrabold flex items-center justify-center text-xs border border-[#B8F04A]/30 shadow-[0_0_10px_rgba(184,240,74,0.15)]">
+            PL
+          </div>
+
+          <!-- Botão Encerrar Sessão quando autenticado -->
+          <button id="header-logout-btn" onclick="terminateDoctorSession()" class="hidden px-2.5 py-1 rounded-lg bg-[#2A1416] hover:bg-red-900/60 text-red-200 border border-red-500/30 text-xs font-bold transition flex items-center space-x-1" title="Encerrar Sessão">
+            <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
+            <span class="hidden md:inline">Sair</span>
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+  </header>
+
+  <!-- ================================================================= -->
+  <!-- 1. ECRÃ DE LOGIN DUPLO & REGISTO SNS (ESTADO INICIAL CONFIDENCIAL) -->
+  <!-- ================================================================= -->
+  <div id="doctor-login-view" class="flex-1 max-w-xl mx-auto px-4 py-10 flex flex-col justify-center w-full">
+    
+    <div class="bg-[#131F22] rounded-3xl border border-[#1E3338] p-7 sm:p-9 shadow-2xl space-y-5 relative overflow-hidden">
+      <div class="absolute -right-12 -top-12 w-48 h-48 bg-[#B8F04A]/10 rounded-full blur-3xl pointer-events-none"></div>
+
+      <!-- Cabeçalho do Card de Autenticação -->
+      <div class="text-center space-y-2.5">
+        <div class="mx-auto w-14 h-14 rounded-2xl bg-[#14261F] border border-[#B8F04A]/40 flex items-center justify-center text-[#B8F04A] shadow-[0_0_25px_rgba(184,240,74,0.3)]">
+          <i data-lucide="shield-check" class="w-7 h-7"></i>
+        </div>
+        <div>
+          <span class="text-[10px] font-bold text-[#5EEAD4] bg-[#14332D] px-3 py-0.5 rounded-full border border-[#5EEAD4]/30 uppercase tracking-wider">
+            PORTAL CLÍNICO & CARTEIRA DE SAÚDE · SNS
+          </span>
+          <h1 id="auth-portal-title" class="text-2xl font-black text-white tracking-tight mt-2">Acesso ao Sistema PULSO</h1>
+          <p id="auth-portal-subtitle" class="text-xs text-[#8DA39E] max-w-md mx-auto mt-1 leading-relaxed">
+            Escolha o seu perfil de acesso ou crie uma nova conta de utente com o seu Número de Utente do SNS.
+          </p>
+        </div>
+      </div>
+
+      <!-- Seletor de 3 Modos: Médica/o | Paciente | Registar Utente -->
+      <div class="grid grid-cols-3 gap-1.5 bg-[#0C1416] p-1.5 rounded-2xl border border-[#1E3338]">
+        <button type="button" onclick="switchAuthTab('doctor')" id="auth-tab-doctor" class="py-2 px-2 rounded-xl text-xs font-extrabold bg-[#B8F04A] text-[#0C1416] transition">
+          🩺 Sou Médica/o
+        </button>
+        <button type="button" onclick="switchAuthTab('patient')" id="auth-tab-patient" class="py-2 px-2 rounded-xl text-xs font-bold text-[#8DA39E] hover:text-white transition">
+          👤 Sou Paciente
+        </button>
+        <button type="button" onclick="switchAuthTab('register')" id="auth-tab-register" class="py-2 px-2 rounded-xl text-xs font-bold text-[#8DA39E] hover:text-white transition">
+          ➕ Registar SNS
+        </button>
+      </div>
+
+      <!-- Alerta de Erro Partilhado -->
+      <div id="login-error-alert" class="hidden p-3 rounded-xl bg-[#2A1416] border border-red-500/40 text-red-200 text-xs flex items-center space-x-2">
+        <i data-lucide="alert-circle" class="w-4 h-4 text-red-400 shrink-0"></i>
+        <span id="login-error-text">Código incorreto ou expirado. Confirme com o utente o código obtido no telemóvel.</span>
+      </div>
+
+      <!-- PAINEL A: LOGIN MÉDICA/O (Código 8 dígitos + Cédula / QR) -->
+      <div id="auth-panel-doctor" class="space-y-4">
+        <div class="space-y-1.5">
+          <label for="doctor-license-input" class="text-[11px] font-bold text-[#8DA39E] block uppercase tracking-wider">Cédula Profissional (Ordem dos Médicos)</label>
+          <input type="text" id="doctor-license-input" value="48192" placeholder="Ex: 48192" class="w-full text-sm font-mono font-bold bg-[#0C1416] text-white border border-[#1E3338] focus:border-[#B8F04A] rounded-xl py-2.5 px-3.5 focus:outline-none">
+        </div>
+
+        <div class="space-y-2">
+          <label for="doctor-login-code-input" class="text-xs font-bold text-white block uppercase tracking-wider flex justify-between items-center">
+            <span>Código de Acesso do Doente (8 dígitos):</span>
+            <span class="text-[10px] text-[#8DA39E] font-normal">Facultado pelo utente</span>
+          </label>
+          <input 
+            type="text" 
+            id="doctor-login-code-input" 
+            oninput="handleCodeInput(this)" 
+            onkeydown="if(event.key === 'Enter') validateDoctorAccess()"
+            placeholder="0000 0000" 
+            maxlength="9" 
+            autocomplete="off"
+            class="w-full text-center text-3xl font-mono font-black tracking-widest bg-[#0C1416] text-[#B8F04A] border-2 border-[#1E3338] focus:border-[#B8F04A] rounded-2xl py-3.5 px-4 focus:outline-none transition shadow-inner placeholder:text-slate-700"
+          >
+        </div>
+
+        <button onclick="validateDoctorAccess()" class="w-full py-3.5 bg-[#B8F04A] hover:bg-[#C9F762] text-[#0C1416] font-black text-sm rounded-2xl shadow-[0_0_20px_rgba(184,240,74,0.35)] transition flex items-center justify-center space-x-2">
+          <i data-lucide="key" class="w-4 h-4"></i>
+          <span>Validar Código e Aceder aos Exames</span>
+        </button>
+
+        <button type="button" onclick="simulateQrScan()" class="w-full py-2.5 bg-[#162529] hover:bg-[#1E3338] text-[#5EEAD4] hover:text-white border border-[#1E3338] hover:border-[#5EEAD4]/40 text-xs font-bold rounded-xl flex items-center justify-center space-x-2 transition">
+          <i data-lucide="qr-code" class="w-4 h-4 text-[#B8F04A]"></i>
+          <span>Ler QR Code do Utente (Leitor / Câmara)</span>
+        </button>
+      </div>
+
+      <!-- PAINEL B: LOGIN PACIENTE / UTENTE (Nº Utente SNS + Palavra-passe) -->
+      <div id="auth-panel-patient" class="hidden space-y-4">
+        <div class="space-y-1.5">
+          <label for="patient-login-sns" class="text-[11px] font-bold text-[#8DA39E] block uppercase tracking-wider">Nº de Utente SNS (9 dígitos)</label>
+          <input type="text" id="patient-login-sns" value="234891024" maxlength="9" placeholder="234891024" class="w-full text-sm font-mono font-bold bg-[#0C1416] text-[#B8F04A] border border-[#1E3338] focus:border-[#B8F04A] rounded-xl py-2.5 px-3.5 focus:outline-none">
+        </div>
+        <div class="space-y-1.5">
+          <label for="patient-login-password" class="text-[11px] font-bold text-[#8DA39E] block uppercase tracking-wider">Palavra-passe</label>
+          <input type="password" id="patient-login-password" value="pulso1234" onkeydown="if(event.key === 'Enter') loginAsPatient()" placeholder="••••••••" class="w-full text-sm bg-[#0C1416] text-white border border-[#1E3338] focus:border-[#B8F04A] rounded-xl py-2.5 px-3.5 focus:outline-none">
+        </div>
+        <div class="p-3 rounded-xl bg-[#0C1416] border border-[#1E3338] text-[11px] text-[#8DA39E]">
+          Conta demo pré-carregada: <code class="text-[#5EEAD4] font-mono">234891024</code> / <code class="text-[#5EEAD4] font-mono">pulso1234</code> (Sr. António Silva).
+        </div>
+        <button type="button" onclick="loginAsPatient()" class="w-full py-3.5 bg-[#B8F04A] hover:bg-[#C9F762] text-[#0C1416] font-black text-sm rounded-2xl shadow-[0_0_20px_rgba(184,240,74,0.35)] transition flex items-center justify-center space-x-2">
+          <i data-lucide="user-check" class="w-4 h-4"></i>
+          <span>Entrar na Minha Carteira de Utente</span>
+        </button>
+      </div>
+
+      <!-- PAINEL C: REGISTO DE NOVO UTENTE POR Nº SNS -->
+      <div id="auth-panel-register" class="hidden space-y-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label for="reg-sns" class="text-[11px] font-bold text-[#8DA39E] block uppercase">Nº Utente SNS (9 dígitos)*</label>
+            <input type="text" id="reg-sns" maxlength="9" placeholder="Ex: 298765432" class="mt-1 w-full text-sm font-mono font-bold bg-[#0C1416] text-[#B8F04A] border border-[#1E3338] focus:border-[#B8F04A] rounded-xl py-2 px-3 focus:outline-none">
+          </div>
+          <div>
+            <label for="reg-birth" class="text-[11px] font-bold text-[#8DA39E] block uppercase">Data de Nascimento*</label>
+            <input type="date" id="reg-birth" value="1985-05-14" class="mt-1 w-full text-sm bg-[#0C1416] text-white border border-[#1E3338] focus:border-[#B8F04A] rounded-xl py-2 px-3 focus:outline-none">
+          </div>
+        </div>
+        <div>
+          <label for="reg-name" class="text-[11px] font-bold text-[#8DA39E] block uppercase">Nome Completo*</label>
+          <input type="text" id="reg-name" placeholder="Ex: Maria João Costa" class="mt-1 w-full text-sm bg-[#0C1416] text-white border border-[#1E3338] focus:border-[#B8F04A] rounded-xl py-2 px-3 focus:outline-none">
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label for="reg-email" class="text-[11px] font-bold text-[#8DA39E] block uppercase">Email (opcional)</label>
+            <input type="email" id="reg-email" placeholder="maria@exemplo.pt" class="mt-1 w-full text-sm bg-[#0C1416] text-white border border-[#1E3338] focus:border-[#B8F04A] rounded-xl py-2 px-3 focus:outline-none">
+          </div>
+          <div>
+            <label for="reg-password" class="text-[11px] font-bold text-[#8DA39E] block uppercase">Palavra-passe (mín. 6)*</label>
+            <input type="password" id="reg-password" placeholder="••••••" class="mt-1 w-full text-sm bg-[#0C1416] text-white border border-[#1E3338] focus:border-[#B8F04A] rounded-xl py-2 px-3 focus:outline-none">
+          </div>
+        </div>
+        <button type="button" onclick="registerNewPatient()" class="w-full py-3.5 bg-[#B8F04A] hover:bg-[#C9F762] text-[#0C1416] font-black text-sm rounded-2xl shadow-[0_0_20px_rgba(184,240,74,0.35)] transition flex items-center justify-center space-x-2">
+          <i data-lucide="user-plus" class="w-4 h-4"></i>
+          <span>Criar Conta de Utente (SNS)</span>
+        </button>
+      </div>
+
+      <!-- Rodapé de Conformidade & RGPD -->
+      <div class="pt-2 border-t border-[#1E3338] flex items-center justify-between text-[11px] text-[#8DA39E]">
+        <span class="flex items-center"><i data-lucide="shield" class="w-3.5 h-3.5 text-[#5EEAD4] mr-1"></i> Soberania de Dados & RGPD Ativo</span>
+        <span>Acesso Auditado</span>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- ================================================================= -->
+  <!-- 2. CONTENTOR DO PROCESSO CLÍNICO (SÓ FICA VISÍVEL APÓS LOGIN VÁLIDO) -->
+  <!-- ================================================================= -->
+  <div id="patient-records-view" class="hidden flex-1 flex flex-col">
+    
+    <!-- Barra de Navegação Dark OLED com Destaque Neon Lime -->
+    <div class="bg-[#0C1416]/95 border-b border-[#1E3338] sticky top-16 z-40">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <nav class="flex space-x-2 sm:space-x-3 overflow-x-auto py-2.5" aria-label="Tabs">
+          
+          <button onclick="switchTab('dashboard')" id="tab-dashboard" class="tab-btn flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold text-[#0C1416] bg-[#B8F04A] shadow-[0_0_15px_rgba(184,240,74,0.3)] transition">
+            <i data-lucide="trending-up" class="w-4 h-4"></i>
+            <span>Evolução Clínica & Histórico</span>
+          </button>
+
+          <button onclick="switchTab('email-ingestion')" id="tab-email-ingestion" class="tab-btn flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-semibold text-[#8DA39E] hover:text-white hover:bg-[#131F22] border border-transparent transition">
+            <i data-lucide="mail" class="w-4 h-4"></i>
+            <span>Recolha por Email (IA)</span>
+            <span class="px-1.5 py-0.2 bg-[#14332D] text-[#5EEAD4] text-[9px] font-bold rounded-full border border-[#5EEAD4]/30">NOVO</span>
+          </button>
+
+          <button onclick="switchTab('photo-capture')" id="tab-photo-capture" class="tab-btn flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-semibold text-[#8DA39E] hover:text-white hover:bg-[#131F22] border border-transparent transition whitespace-nowrap">
+            <i data-lucide="camera" class="w-4 h-4"></i>
+            <span>PDF, Câmara & OCR</span>
+          </button>
+
+          <button onclick="switchTab('measurements-events')" id="tab-measurements-events" class="tab-btn flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-semibold text-[#8DA39E] hover:text-white hover:bg-[#131F22] border border-transparent transition whitespace-nowrap">
+            <i data-lucide="heart-pulse" class="w-4 h-4"></i>
+            <span>Medições & Eventos</span>
+          </button>
+
+          <button onclick="switchTab('learning')" id="tab-learning" class="tab-btn flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-semibold text-[#8DA39E] hover:text-white hover:bg-[#131F22] border border-transparent transition whitespace-nowrap">
+            <i data-lucide="book-open" class="w-4 h-4"></i>
+            <span>Aprender (23)</span>
+          </button>
+
+          <button onclick="switchTab('cross-border')" id="tab-cross-border" class="tab-btn flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-semibold text-[#8DA39E] hover:text-white hover:bg-[#131F22] border border-transparent transition whitespace-nowrap">
+            <i data-lucide="shield" class="w-4 h-4"></i>
+            <span>Partilha Segura & Emergência</span>
+            <span class="px-1.5 py-0.2 bg-[#1E293B] text-[#94A3B8] text-[9px] font-bold rounded-full border border-slate-700">IPS / UE</span>
+          </button>
+
+          <div class="ml-auto flex items-center space-x-2 pl-3">
+            <button onclick="terminateDoctorSession()" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-[#2A1416] hover:bg-red-900/60 text-red-200 border border-red-500/30 transition">
+              <i data-lucide="lock" class="w-3.5 h-3.5"></i>
+              <span>Encerrar Consulta</span>
+            </button>
+          </div>
+
+        </nav>
+      </div>
+    </div>
+
+    <!-- Conteúdo Principal dos Registos do Doente -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full space-y-6">
+
+      <!-- BANNER DE SESSÃO MÉDICA ATIVA (DESBLOQUEADA COM CÓDIGO DE 8 DÍGITOS) -->
+      <div id="doctor-session-banner" class="bg-gradient-to-r from-[#14261F] via-[#162529] to-[#0C1416] border-2 border-[#B8F04A] rounded-3xl p-5 shadow-[0_0_30px_rgba(184,240,74,0.25)] flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div class="flex items-start sm:items-center space-x-4">
+          <div class="w-12 h-12 rounded-2xl bg-[#B8F04A] text-[#0C1416] flex items-center justify-center font-black shadow-[0_0_15px_rgba(184,240,74,0.4)]">
+            <i data-lucide="stethoscope" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <div class="flex flex-wrap items-center gap-2">
+              <span id="banner-role-badge" class="px-2.5 py-0.5 rounded-full bg-[#14332D] text-[#5EEAD4] text-[10px] font-black border border-[#5EEAD4]/30">
+                🔓 SESSÃO CLÍNICA ATIVA
+              </span>
+              <span class="text-xs text-[#8DA39E]">Doente: <strong id="banner-patient-name" class="text-white">Sr. António Silva</strong> (<span id="banner-patient-sns">SNS #234 891 024</span>)</span>
+            </div>
+            <h3 id="banner-sub-line" class="text-sm font-bold text-white mt-1">
+              Médica: <span class="text-[#B8F04A]">Dra. Marta Fernandes</span> (USF São João) · Código Validado: <code id="banner-code-display" class="font-mono text-white bg-[#0C1416] px-2 py-0.5 rounded border border-[#1E3338]">7492 1830</code>
+            </h3>
+          </div>
+        </div>
+        <div class="flex items-center space-x-3 border-t md:border-t-0 border-[#1E3338] pt-3 md:pt-0">
+          <!-- Controlo exclusivo do Paciente: Obter Código de Partilha -->
+          <div id="patient-share-controls" class="hidden flex items-center space-x-2">
+            <button onclick="patientQuickShareCode()" class="px-3.5 py-2 rounded-xl bg-[#B8F04A] hover:bg-[#C9F762] text-[#0C1416] text-xs font-black transition flex items-center space-x-1.5">
+              <i data-lucide="qr-code" class="w-3.5 h-3.5"></i>
+              <span>Obter Código 8 Dígitos</span>
+            </button>
+          </div>
+          <div id="doctor-timer-box" class="text-left md:text-right">
+            <span class="text-[11px] text-[#8DA39E] block">Tempo Concedido: <strong id="banner-duration-label" class="text-white">1 Hora</strong></span>
+            <span id="banner-countdown" class="font-mono text-xs font-bold text-[#5EEAD4]">Tempo Restante: 59m 50s</span>
+          </div>
+          <button onclick="terminateDoctorSession()" class="px-4 py-2 rounded-xl bg-[#2A1416] hover:bg-red-900/60 text-red-200 border border-red-500/30 text-xs font-bold transition flex items-center space-x-1.5">
+            <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
+            <span id="banner-logout-label">Terminar Consulta</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- ======================================================== -->
+      <!-- ABA 1: DASHBOARD & TENDÊNCIAS (IGUAL AO MOBILE ECRÃ 1 E 2) -->
+      <!-- ======================================================== -->
+      <div id="view-dashboard" class="view-panel space-y-6">
+        
+        <!-- Banner de Alertas Clínicos Vitais (Estilo Dark OLED) -->
+        <div class="bg-[#181D1A] border border-[#2A3E33] rounded-2xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div class="flex items-start space-x-3.5">
+            <div class="p-2.5 rounded-xl bg-[#23382E] text-[#B8F04A] border border-[#B8F04A]/20">
+              <i data-lucide="shield-alert" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <div class="flex items-center space-x-2">
+                <h3 class="text-xs font-bold text-white uppercase tracking-wider">Alertas Clínicos Ativos do Utente</h3>
+                <span class="w-2 h-2 rounded-full bg-red-400 animate-ping"></span>
+              </div>
+              <div class="flex flex-wrap gap-2 mt-1.5">
+                <span class="inline-flex items-center text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-[#2A1416] text-[#FCA5A5] border border-red-500/30">
+                  <i data-lucide="alert-octagon" class="w-3 h-3 mr-1 text-red-400"></i> Alergia Grave a Iodo / Contraste Radiológico
+                </span>
+                <span class="inline-flex items-center text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-[#182326] text-[#67E8F9] border border-cyan-500/30">
+                  <i data-lucide="heart" class="w-3 h-3 mr-1 text-cyan-400"></i> Pacemaker Cardíaco (Implantado 2022)
+                </span>
+                <span class="inline-flex items-center text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-[#2A2312] text-[#FDE047] border border-amber-500/30">
+                  <i data-lucide="pill" class="w-3 h-3 mr-1 text-amber-400"></i> Varfarina 5mg (Anticoagulante - Risco Hemorragia)
+                </span>
+              </div>
+            </div>
+          </div>
+          <button onclick="switchTab('cross-border')" class="inline-flex items-center space-x-1.5 px-4 py-2 rounded-xl bg-[#131F22] border border-[#1E3338] text-white hover:text-[#B8F04A] hover:border-[#B8F04A]/40 font-semibold text-xs shadow-sm transition">
+            <span>Abrir Passe de Emergência</span>
+            <i data-lucide="arrow-right" class="w-3.5 h-3.5 text-[#B8F04A]"></i>
+          </button>
+        </div>
+
+        <!-- SEÇÃO DUPLA: EVOLUÇÃO CLÍNICA (ECRÃ 2 MOBILE) + MINI SPARKLINE CARDS -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          
+          <!-- Cartão Principal de Tendência: Evolução Clínica -->
+          <div class="lg:col-span-2 bg-[#131F22] rounded-3xl border border-[#1E3338] p-6 shadow-xl flex flex-col justify-between">
+            <div>
+              <!-- Header do Gráfico igual ao Ecrã 2 do Telemóvel -->
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-[#1E3338] gap-4">
+                <div>
+                  <span class="text-[10px] font-bold text-[#8DA39E] uppercase tracking-wider">MÓDULO DE ANÁLISE LONGITUDINAL</span>
+                  <h2 class="text-xl font-bold text-white mt-0.5">Evolução clínica</h2>
+                  <p class="text-xs text-[#8DA39E] mt-0.5">Gráfico por parâmetro com o intervalo de referência normalizado.</p>
+                </div>
+
+                <!-- Seletor em Pill Escuro igual ao telemóvel + Botão Info Aprender -->
+                <div class="flex items-center space-x-2 bg-[#0C1416] p-1 rounded-2xl border border-[#1E3338]">
+                  <label for="biomarker-select" class="text-[11px] text-[#8DA39E] px-2 font-medium">Parâmetro:</label>
+                  <select id="biomarker-select" onchange="updateChartData()" class="text-xs bg-[#162529] text-[#B8F04A] font-bold border border-[#1E3338] rounded-xl px-3 py-1.5 focus:outline-none focus:border-[#B8F04A]">
+                    <option value="glucose">Glicose (mg/dL)</option>
+                    <option value="creatinine">Creatinina (mg/dL)</option>
+                    <option value="cholesterol">Colesterol LDL (mg/dL)</option>
+                    <option value="hba1c">Hemoglobina Glicada HbA1c (%)</option>
+                  </select>
+                  <button type="button" onclick="openLearningForBiomarker()" title="Explicação educativa deste parâmetro" class="w-7 h-7 rounded-xl bg-[#162529] hover:bg-[#1E3338] text-[#5EEAD4] font-bold text-xs flex items-center justify-center border border-[#1E3338]">
+                    i
+                  </button>
+                </div>
+              </div>
+
+              <!-- Destaque do Valor Atual idêntico ao Telemóvel (94 mg/dL + badge) -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 my-5 p-4 rounded-2xl bg-[#0C1416]/80 border border-[#1E3338]">
+                <div>
+                  <span class="text-[11px] text-[#8DA39E] font-medium block">Último valor</span>
+                  <div class="flex items-baseline space-x-2 mt-0.5">
+                    <span id="metric-large-value" class="text-4xl font-black text-[#B8F04A] tracking-tight">94</span>
+                    <span id="metric-large-unit" class="text-lg font-bold text-[#8DA39E]">mg/dL</span>
+                  </div>
+                </div>
+                <div class="flex flex-col justify-center sm:items-end">
+                  <span id="metric-status-badge" class="inline-flex items-center px-3 py-1 rounded-full bg-[#14332D] text-[#5EEAD4] text-xs font-bold border border-[#5EEAD4]/30">
+                    <span class="w-2 h-2 rounded-full bg-[#B8F04A] mr-1.5 shadow-[0_0_6px_#B8F04A]"></span>
+                    Dentro do intervalo
+                  </span>
+                  <span id="metric-ref-range" class="text-[11px] text-[#8DA39E] mt-1 font-mono">Ref.: 70 – 100 mg/dL</span>
+                </div>
+              </div>
+
+              <!-- Canvas do Gráfico Dark OLED com curva Neon Lime -->
+              <div class="pt-2 h-64">
+                <canvas id="trendChart"></canvas>
+              </div>
+            </div>
+
+            <div class="mt-4 pt-3 border-t border-[#1E3338] flex items-center justify-between text-[11px] text-[#8DA39E]">
+              <span class="flex items-center"><i data-lucide="check-check" class="w-3.5 h-3.5 text-[#B8F04A] mr-1"></i> Correlacionado com Unilabs, USF São João e CUF</span>
+              <span class="font-mono text-[10px] bg-[#162529] px-2 py-0.5 rounded text-[#8DA39E] border border-[#1E3338]">LOINC 1558-6</span>
+            </div>
+          </div>
+
+          <!-- Coluna Lateral: Mini Sparklines (Idênticos ao Ecrã 2 do Telemóvel) + Resumo Clínico -->
+          <div class="space-y-4 flex flex-col justify-between">
+            
+            <div class="space-y-3">
+              <h3 class="text-xs font-bold text-[#8DA39E] uppercase tracking-wider">Outros Biomarcadores em Destaque</h3>
+
+              <!-- Card Miniatura 1: Colesterol -->
+              <div class="bg-[#131F22] rounded-2xl border border-[#1E3338] hover:border-[#B8F04A]/40 p-4 transition cursor-pointer flex items-center justify-between" onclick="selectBiomarker('cholesterol')">
+                <div>
+                  <span class="text-xs text-[#8DA39E] font-medium block">Colesterol</span>
+                  <span class="text-lg font-extrabold text-white">182 <span class="text-xs font-normal text-[#8DA39E]">mg/dL</span></span>
+                  <span class="block text-[10px] text-[#5EEAD4] mt-0.5">● Normal (&lt; 190)</span>
+                </div>
+                <div class="flex items-center space-x-3">
+                  <svg class="w-20 h-8" viewBox="0 0 100 30" fill="none">
+                    <path d="M0,25 Q25,20 50,15 T100,8" stroke="#B8F04A" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                    <circle cx="100" cy="8" r="3" fill="#B8F04A" />
+                  </svg>
+                  <i data-lucide="chevron-right" class="w-4 h-4 text-[#8DA39E]"></i>
+                </div>
+              </div>
+
+              <!-- Card Miniatura 2: Creatinina -->
+              <div class="bg-[#131F22] rounded-2xl border border-[#1E3338] hover:border-[#B8F04A]/40 p-4 transition cursor-pointer flex items-center justify-between" onclick="selectBiomarker('creatinine')">
+                <div>
+                  <span class="text-xs text-[#8DA39E] font-medium block">Creatinina</span>
+                  <span class="text-lg font-extrabold text-white">0,98 <span class="text-xs font-normal text-[#8DA39E]">mg/dL</span></span>
+                  <span class="block text-[10px] text-[#5EEAD4] mt-0.5">● Função Renal Ótima</span>
+                </div>
+                <div class="flex items-center space-x-3">
+                  <svg class="w-20 h-8" viewBox="0 0 100 30" fill="none">
+                    <path d="M0,22 Q30,24 60,18 T100,10" stroke="#B8F04A" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                    <circle cx="100" cy="10" r="3" fill="#B8F04A" />
+                  </svg>
+                  <i data-lucide="chevron-right" class="w-4 h-4 text-[#8DA39E]"></i>
+                </div>
+              </div>
+
+              <!-- Card Miniatura 3: HbA1c -->
+              <div class="bg-[#131F22] rounded-2xl border border-[#1E3338] hover:border-[#B8F04A]/40 p-4 transition cursor-pointer flex items-center justify-between" onclick="selectBiomarker('hba1c')">
+                <div>
+                  <span class="text-xs text-[#8DA39E] font-medium block">Hemoglobina Glicada HbA1c</span>
+                  <span class="text-lg font-extrabold text-white">5,9 <span class="text-xs font-normal text-[#8DA39E]">%</span></span>
+                  <span class="block text-[10px] text-amber-400 mt-0.5">● Pré-diabetes Controlada</span>
+                </div>
+                <div class="flex items-center space-x-3">
+                  <svg class="w-20 h-8" viewBox="0 0 100 30" fill="none">
+                    <path d="M0,28 Q30,20 60,14 T100,7" stroke="#B8F04A" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                    <circle cx="100" cy="7" r="3" fill="#B8F04A" />
+                  </svg>
+                  <i data-lucide="chevron-right" class="w-4 h-4 text-[#8DA39E]"></i>
+                </div>
+              </div>
+            </div>
+
+            <!-- Email de Ingestão Dedicado do Doente -->
+            <div class="bg-[#162529] p-4 rounded-2xl border border-[#1E3338] space-y-2">
+              <span class="text-[10px] text-[#8DA39E] font-bold uppercase tracking-wider block">Canal de Ingestão Automática:</span>
+              <code class="font-mono text-xs text-[#B8F04A] bg-[#0C1416] px-2 py-1 rounded block truncate border border-[#1E3338]">antonio.silva@inbox.pulso.health</code>
+              <p class="text-[10px] text-[#8DA39E]">Os laboratórios enviam para este email e a IA cataloga automaticamente.</p>
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- SEÇÃO HISTÓRICO: O MEU HISTÓRICO AVANÇADO (PESQUISA + 8 CATEGORIAS + 9 PERÍODOS) -->
+        <div class="bg-[#131F22] rounded-3xl border border-[#1E3338] shadow-xl overflow-hidden">
+          
+          <div class="px-6 py-5 border-b border-[#1E3338] space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h2 class="text-lg font-bold text-white flex items-center space-x-2">
+                  <i data-lucide="folder-clock" class="w-5 h-5 text-[#B8F04A]"></i>
+                  <span>Histórico de Exames do Utente</span>
+                </h2>
+                <p class="text-xs text-[#8DA39E]">Exames arquivados com integridade SHA-256, pesquisa instantânea e edição de categoria.</p>
+              </div>
+              <div class="flex items-center space-x-2">
+                <span id="exam-count-badge" class="text-xs font-semibold px-3 py-1 bg-[#162529] text-[#8DA39E] rounded-full border border-[#1E3338]">
+                  5 Exames Registados
+                </span>
+              </div>
+            </div>
+
+            <!-- Barra de Pesquisa e Filtros (8 Categorias + 9 Períodos) -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div class="relative">
+                <input type="text" id="history-search-input" oninput="renderHistoryList()" placeholder="Pesquisar exame, laboratório, parâmetro..." class="w-full text-xs bg-[#0C1416] text-white border border-[#1E3338] focus:border-[#B8F04A] rounded-xl py-2 pl-8 pr-3 focus:outline-none">
+                <i data-lucide="search" class="w-3.5 h-3.5 text-[#8DA39E] absolute left-2.5 top-2.5"></i>
+              </div>
+              <select id="history-category-filter" onchange="renderHistoryList()" class="text-xs bg-[#0C1416] text-white border border-[#1E3338] focus:border-[#B8F04A] rounded-xl py-2 px-3 focus:outline-none">
+                <option value="all">Todas as Categorias (8)</option>
+                <option value="blood_tests">Análises ao sangue</option>
+                <option value="urine">Urina</option>
+                <option value="imaging">Imagiologia</option>
+                <option value="cardiology">Cardiologia</option>
+                <option value="vaccines">Vacinas</option>
+                <option value="prescriptions">Receitas</option>
+                <option value="clinical_reports">Relatórios clínicos</option>
+                <option value="other">Outro</option>
+              </select>
+              <select id="history-period-filter" onchange="renderHistoryList()" class="text-xs bg-[#0C1416] text-white border border-[#1E3338] focus:border-[#B8F04A] rounded-xl py-2 px-3 focus:outline-none">
+                <option value="all">Todo o histórico</option>
+                <option value="1w">Última semana</option>
+                <option value="1m">Último mês</option>
+                <option value="3m">Últimos 3 meses</option>
+                <option value="6m">Últimos 6 meses</option>
+                <option value="1y">Último ano</option>
+                <option value="2y">Últimos 2 anos</option>
+                <option value="5y">Últimos 5 anos</option>
+                <option value="10y">Últimos 10 anos</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Lista Dinâmica de Exames -->
+          <div id="exam-history-list" class="divide-y divide-[#1E3338]">
+            
+            <!-- Item 1: Análises ao sangue (SNS) -->
+            <div class="p-4 sm:px-6 hover:bg-[#162529]/60 transition flex items-center justify-between cursor-pointer" onclick="viewExamDetail(1)">
+              <div class="flex items-center space-x-4">
+                <div class="w-10 h-10 rounded-2xl bg-[#14332D] text-[#5EEAD4] flex items-center justify-center border border-[#5EEAD4]/20">
+                  <i data-lucide="droplet" class="w-5 h-5 text-[#B8F04A]"></i>
+                </div>
+                <div>
+                  <div class="flex items-center space-x-2">
+                    <h4 class="text-sm font-bold text-white">Análises ao sangue</h4>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#14332D] text-[#5EEAD4] border border-[#5EEAD4]/30">SNS</span>
+                  </div>
+                  <p class="text-xs text-[#8DA39E] mt-0.5">12 jan 2025 · USF São João · Glicose, Creatinina, Ureia</p>
+                </div>
+              </div>
+              <div class="flex items-center space-x-3">
+                <span class="hidden md:inline-flex items-center text-[11px] text-[#5EEAD4] font-medium"><i data-lucide="mail" class="w-3 h-3 mr-1 text-[#B8F04A]"></i> Email IA</span>
+                <i data-lucide="chevron-right" class="w-5 h-5 text-[#8DA39E]"></i>
+              </div>
+            </div>
+
+            <!-- Item 2: Hemograma (Privado) -->
+            <div class="p-4 sm:px-6 hover:bg-[#162529]/60 transition flex items-center justify-between cursor-pointer" onclick="viewExamDetail(2)">
+              <div class="flex items-center space-x-4">
+                <div class="w-10 h-10 rounded-2xl bg-[#1E293B] text-[#94A3B8] flex items-center justify-center border border-slate-700">
+                  <i data-lucide="flask-conical" class="w-5 h-5 text-[#B8F04A]"></i>
+                </div>
+                <div>
+                  <div class="flex items-center space-x-2">
+                    <h4 class="text-sm font-bold text-white">Hemograma</h4>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#1E293B] text-[#94A3B8] border border-slate-600">Privado</span>
+                  </div>
+                  <p class="text-xs text-[#8DA39E] mt-0.5">10 out 2024 · Unilabs Portugal · Leucócitos, Hemoglobina, Plaquetas</p>
+                </div>
+              </div>
+              <div class="flex items-center space-x-3">
+                <span class="hidden md:inline-flex items-center text-[11px] text-[#8DA39E] font-medium"><i data-lucide="camera" class="w-3 h-3 mr-1 text-[#B8F04A]"></i> Foto OCR</span>
+                <i data-lucide="chevron-right" class="w-5 h-5 text-[#8DA39E]"></i>
+              </div>
+            </div>
+
+            <!-- Item 3: Creatinina (Privado) -->
+            <div class="p-4 sm:px-6 hover:bg-[#162529]/60 transition flex items-center justify-between cursor-pointer" onclick="viewExamDetail(3)">
+              <div class="flex items-center space-x-4">
+                <div class="w-10 h-10 rounded-2xl bg-[#1E293B] text-[#94A3B8] flex items-center justify-center border border-slate-700">
+                  <i data-lucide="activity" class="w-5 h-5 text-[#B8F04A]"></i>
+                </div>
+                <div>
+                  <div class="flex items-center space-x-2">
+                    <h4 class="text-sm font-bold text-white">Creatinina & Função Renal</h4>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#1E293B] text-[#94A3B8] border border-slate-600">Privado</span>
+                  </div>
+                  <p class="text-xs text-[#8DA39E] mt-0.5">10 out 2024 · Hospital da Luz · Função Renal (eGFR 82 mL/min)</p>
+                </div>
+              </div>
+              <div class="flex items-center space-x-3">
+                <span class="hidden md:inline-flex items-center text-[11px] text-[#5EEAD4] font-medium"><i data-lucide="mail" class="w-3 h-3 mr-1 text-[#B8F04A]"></i> Email IA</span>
+                <i data-lucide="chevron-right" class="w-5 h-5 text-[#8DA39E]"></i>
+              </div>
+            </div>
+
+            <!-- Item 4: Análises ao sangue (SNS) -->
+            <div class="p-4 sm:px-6 hover:bg-[#162529]/60 transition flex items-center justify-between cursor-pointer" onclick="viewExamDetail(4)">
+              <div class="flex items-center space-x-4">
+                <div class="w-10 h-10 rounded-2xl bg-[#14332D] text-[#5EEAD4] flex items-center justify-center border border-[#5EEAD4]/20">
+                  <i data-lucide="droplet" class="w-5 h-5 text-[#B8F04A]"></i>
+                </div>
+                <div>
+                  <div class="flex items-center space-x-2">
+                    <h4 class="text-sm font-bold text-white">Análises ao sangue</h4>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#14332D] text-[#5EEAD4] border border-[#5EEAD4]/30">SNS</span>
+                  </div>
+                  <p class="text-xs text-[#8DA39E] mt-0.5">22 mai 2024 · USF São João · Perfil Lipídico & Colesterol</p>
+                </div>
+              </div>
+              <div class="flex items-center space-x-3">
+                <span class="hidden md:inline-flex items-center text-[11px] text-[#8DA39E] font-medium"><i data-lucide="camera" class="w-3 h-3 mr-1 text-[#B8F04A]"></i> Foto OCR</span>
+                <i data-lucide="chevron-right" class="w-5 h-5 text-[#8DA39E]"></i>
+              </div>
+            </div>
+
+            <!-- Item 5: Hemograma (SNS) -->
+            <div class="p-4 sm:px-6 hover:bg-[#162529]/60 transition flex items-center justify-between cursor-pointer" onclick="viewExamDetail(5)">
+              <div class="flex items-center space-x-4">
+                <div class="w-10 h-10 rounded-2xl bg-[#14332D] text-[#5EEAD4] flex items-center justify-center border border-[#5EEAD4]/20">
+                  <i data-lucide="flask-conical" class="w-5 h-5 text-[#B8F04A]"></i>
+                </div>
+                <div>
+                  <div class="flex items-center space-x-2">
+                    <h4 class="text-sm font-bold text-white">Hemograma</h4>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#14332D] text-[#5EEAD4] border border-[#5EEAD4]/30">SNS</span>
+                  </div>
+                  <p class="text-xs text-[#8DA39E] mt-0.5">15 fev 2024 · USF São João · Controlo Anual de Rotina</p>
+                </div>
+              </div>
+              <div class="flex items-center space-x-3">
+                <span class="hidden md:inline-flex items-center text-[11px] text-[#8DA39E] font-medium"><i data-lucide="camera" class="w-3 h-3 mr-1 text-[#B8F04A]"></i> Foto OCR</span>
+                <i data-lucide="chevron-right" class="w-5 h-5 text-[#8DA39E]"></i>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- ======================================================== -->
+      <!-- ABA 2: RECOLHA POR EMAIL COM IA REORGANIZADORA -->
+      <!-- ======================================================== -->
+      <div id="view-email-ingestion" class="view-panel hidden space-y-6">
+        
+        <!-- Cartão Hero com Estética Neon Lime / OLED -->
+        <div class="bg-gradient-to-r from-[#14231E] via-[#131F22] to-[#0C1416] text-white rounded-3xl p-6 sm:p-8 border border-[#B8F04A]/30 shadow-2xl relative overflow-hidden">
+          <div class="absolute -right-10 -bottom-10 w-64 h-64 bg-[#B8F04A]/10 rounded-full blur-3xl pointer-events-none"></div>
+
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
+            <div class="space-y-3">
+              <span class="px-3 py-1 rounded-full bg-[#14332D] text-[#5EEAD4] font-bold text-xs border border-[#5EEAD4]/30">
+                REQUISITO 3 · INGESTÃO POR EMAIL COM IA AUTÓNOMA
+              </span>
+              <h2 class="text-2xl font-extrabold text-white tracking-tight">O seu Email Pessoal de Ingestão de Exames</h2>
+              <p class="text-sm text-[#8DA39E] max-w-2xl leading-relaxed">
+                Faculte este endereço nos laboratórios ou clínicas (Unilabs, Germano de Sousa, CUF, etc.), ou reencaminhe os seus emails com resultados em PDF. A nossa IA classifica o remetente, extrai os parâmetros estruturados, mapeia para normas LOINC e atualiza o seu histórico clínico.
+              </p>
+            </div>
+
+            <div class="bg-[#0C1416]/90 p-5 rounded-2xl border border-[#B8F04A]/40 flex flex-col items-center text-center shadow-xl min-w-[280px]">
+              <span class="text-xs text-[#8DA39E] mb-1 font-medium">O seu endereço pessoal dedicado:</span>
+              <span class="font-mono text-sm font-bold text-[#B8F04A] select-all tracking-wide">antonio.silva@inbox.pulso.health</span>
+              <button onclick="copyEmail()" class="mt-3 w-full text-xs bg-[#B8F04A] hover:bg-[#C9F762] text-[#0C1416] px-4 py-2 rounded-xl font-extrabold transition flex items-center justify-center space-x-1.5 shadow-[0_0_12px_rgba(184,240,74,0.3)]">
+                <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                <span>Copiar Endereço</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Simulador Interativo do Pipeline de Email -->
+        <div class="bg-[#131F22] rounded-3xl border border-[#1E3338] p-6 shadow-xl space-y-6">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-[#1E3338] gap-4">
+            <div>
+              <h3 class="text-base font-bold text-white flex items-center space-x-2">
+                <i data-lucide="cpu" class="w-5 h-5 text-[#B8F04A]"></i>
+                <span>Simulador de Ingestão Inbound & Pipeline de IA</span>
+              </h3>
+              <p class="text-xs text-[#8DA39E]">Execute uma simulação de envio de email de laboratório para observar o agente de IA a reorganizar e catalogar em tempo real.</p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <button onclick="simulateEmailArrival('unilabs')" class="px-4 py-2.5 bg-[#B8F04A] hover:bg-[#C9F762] text-[#0C1416] font-extrabold rounded-xl text-xs shadow-[0_0_12px_rgba(184,240,74,0.3)] transition flex items-center space-x-1.5">
+                <i data-lucide="send" class="w-3.5 h-3.5"></i>
+                <span>Simular Envio: Unilabs (Bioquímica)</span>
+              </button>
+              <button onclick="simulateEmailArrival('cuf')" class="px-4 py-2.5 bg-[#162529] hover:bg-[#1E3338] text-white border border-[#1E3338] font-bold rounded-xl text-xs transition flex items-center space-x-1.5">
+                <i data-lucide="send" class="w-3.5 h-3.5 text-[#B8F04A]"></i>
+                <span>Simular Envio: Hospital CUF (Hemograma)</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Etapas do Pipeline de IA (Feedback Visual Dark OLED) -->
+          <div id="ai-pipeline-display" class="hidden space-y-4">
+            <div class="p-5 rounded-2xl bg-[#0C1416] border border-[#1E3338]">
+              <div class="flex items-center justify-between mb-3">
+                <h4 class="text-xs font-bold text-white uppercase tracking-wider flex items-center space-x-2">
+                  <span class="w-2.5 h-2.5 rounded-full bg-[#B8F04A] animate-ping"></span>
+                  <span id="pipeline-status-text">Agente de IA em Execução...</span>
+                </h4>
+                <span id="pipeline-timer" class="font-mono text-xs text-[#B8F04A]">0.8s decorridos</span>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs">
+                <div id="step-1" class="p-3.5 rounded-xl border border-[#B8F04A]/40 bg-[#14261F] text-white">
+                  <div class="font-bold flex items-center space-x-1.5 text-[#B8F04A]">
+                    <i data-lucide="check" class="w-4 h-4"></i>
+                    <span>1. Inbound SMTP</span>
+                  </div>
+                  <p class="text-[11px] text-[#8DA39E] mt-1">Validação SPF/DKIM & extração do anexo PDF.</p>
+                </div>
+
+                <div id="step-2" class="p-3.5 rounded-xl border border-[#1E3338] bg-[#162529] text-[#8DA39E]">
+                  <div class="font-bold flex items-center space-x-1.5">
+                    <i data-lucide="loader" class="w-4 h-4 animate-spin text-[#B8F04A]"></i>
+                    <span>2. Classificação IA</span>
+                  </div>
+                  <p class="text-[11px] text-[#8DA39E] mt-1">Identificação de especialidade e entidade emissora.</p>
+                </div>
+
+                <div id="step-3" class="p-3.5 rounded-xl border border-[#1E3338] bg-[#162529] text-[#8DA39E]">
+                  <div class="font-bold flex items-center space-x-1.5">
+                    <i data-lucide="circle" class="w-4 h-4 text-slate-500"></i>
+                    <span>3. Extração LOINC</span>
+                  </div>
+                  <p class="text-[11px] text-[#8DA39E] mt-1">Parsing tabular de biomarcadores e unidades.</p>
+                </div>
+
+                <div id="step-4" class="p-3.5 rounded-xl border border-[#1E3338] bg-[#162529] text-[#8DA39E]">
+                  <div class="font-bold flex items-center space-x-1.5">
+                    <i data-lucide="circle" class="w-4 h-4 text-slate-500"></i>
+                    <span>4. Catalogação</span>
+                  </div>
+                  <p class="text-[11px] text-[#8DA39E] mt-1">Armazenamento cifrado e atualização de gráficos.</p>
+                </div>
+              </div>
+            </div>
+
+            <div id="ai-result-box" class="p-5 rounded-2xl bg-[#14231E] border border-[#B8F04A]/40 space-y-3">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2 text-white font-bold text-sm">
+                  <i data-lucide="check-circle-2" class="w-5 h-5 text-[#B8F04A]"></i>
+                  <span id="ai-result-title">Exame Processado e Reorganizado com Sucesso pela IA!</span>
+                </div>
+                <span class="px-2.5 py-0.5 bg-[#B8F04A] text-[#0C1416] text-[10px] font-extrabold rounded-full">100% EXATIDÃO</span>
+              </div>
+              <div id="ai-result-details" class="text-xs text-[#E4ECE8] space-y-1.5 font-mono"></div>
+              <div class="pt-2 flex justify-end space-x-3">
+                <button onclick="approveAndAddToRecord()" class="px-5 py-2.5 bg-[#B8F04A] hover:bg-[#C9F762] text-[#0C1416] font-extrabold text-xs rounded-xl shadow-[0_0_15px_rgba(184,240,74,0.3)] transition">
+                  Confirmar e Integrar no Histórico
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <h4 class="text-xs font-bold text-[#8DA39E] uppercase tracking-wider mb-3">Histórico de Correio Recebido e Triado pela IA</h4>
+            <div class="space-y-2.5">
+              <div class="p-4 rounded-2xl border border-[#1E3338] bg-[#162529] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                <div class="flex items-center space-x-3.5">
+                  <div class="p-2.5 bg-[#14332D] text-[#5EEAD4] rounded-xl border border-[#5EEAD4]/20">
+                    <i data-lucide="mail-check" class="w-4 h-4 text-[#B8F04A]"></i>
+                  </div>
+                  <div>
+                    <p class="font-bold text-white">De: <span class="font-normal text-[#8DA39E]">resultados@unilabs.pt</span> · Assunto: <span class="text-[#B8F04A]">«Os seus resultados laboratoriais — Ref 98412»</span></p>
+                    <p class="text-[11px] text-[#8DA39E] mt-0.5">Destinatário: <code class="font-mono text-[#5EEAD4]">antonio.silva@inbox.pulso.health</code> · Recebido a 04/11/2026 14:22</p>
+                  </div>
+                </div>
+                <div class="text-right">
+                  <span class="px-2.5 py-0.5 rounded-full bg-[#14332D] text-[#5EEAD4] font-bold text-[10px] border border-[#5EEAD4]/30">Catalogado: Bioquímica</span>
+                  <span class="block text-[10px] text-[#8DA39E] mt-0.5">Anexo: Relatorio_98412.pdf (1.4 MB)</span>
+                </div>
+              </div>
+
+              <div class="p-4 rounded-2xl border border-[#1E3338] bg-[#162529] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                <div class="flex items-center space-x-3.5">
+                  <div class="p-2.5 bg-[#1E293B] text-[#94A3B8] rounded-xl border border-slate-700">
+                    <i data-lucide="mail-check" class="w-4 h-4 text-[#B8F04A]"></i>
+                  </div>
+                  <div>
+                    <p class="font-bold text-white">De: <span class="font-normal text-[#8DA39E]">secretaria.cardio@hospitaldaluz.pt</span> · Assunto: <span class="text-[#B8F04A]">«Relatório Cardiológico — Dr. Carlos Neves»</span></p>
+                    <p class="text-[11px] text-[#8DA39E] mt-0.5">Destinatário: <code class="font-mono text-[#5EEAD4]">antonio.silva@inbox.pulso.health</code> · Recebido a 12/01/2026 10:05</p>
+                  </div>
+                </div>
+                <div class="text-right">
+                  <span class="px-2.5 py-0.5 rounded-full bg-[#14332D] text-[#5EEAD4] font-bold text-[10px] border border-[#5EEAD4]/30">Catalogado: Cardiologia</span>
+                  <span class="block text-[10px] text-[#8DA39E] mt-0.5">Anexo: EcoCardio_Jan2026.pdf (3.8 MB)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======================================================== -->
+      <!-- ABA 3: PDF, CÂMARA WEB & OCR REAL (DIGITALIZAR & EXTRAIR) -->
+      <!-- ======================================================== -->
+      <div id="view-photo-capture" class="view-panel hidden space-y-6">
+        <div class="bg-[#131F22] rounded-3xl border border-[#1E3338] p-6 sm:p-8 shadow-xl">
+          <div class="max-w-2xl mx-auto text-center space-y-5">
+            <div class="w-16 h-16 bg-[#14231E] text-[#B8F04A] rounded-3xl flex items-center justify-center mx-auto border border-[#B8F04A]/30 shadow-[0_0_20px_rgba(184,240,74,0.2)]">
+              <i data-lucide="file-scan" class="w-8 h-8"></i>
+            </div>
+            <h2 class="text-xl font-extrabold text-white">Leitura Real de PDF, Fotografia & Câmara Web</h2>
+            <p class="text-xs text-[#8DA39E] leading-relaxed">
+              Carregue um PDF clínico, imagem PNG/JPEG ou fotografe um boletim em papel com a câmara. O motor PyMuPDF / IA extrai o texto, identifica biomarcadores e apresenta uma revisão humana antes de guardar.
+            </p>
+
+            <!-- Botões de Ação -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <label class="cursor-pointer py-3 px-4 bg-[#B8F04A] hover:bg-[#C9F762] text-[#0C1416] font-black text-xs rounded-2xl shadow-[0_0_15px_rgba(184,240,74,0.3)] transition flex items-center justify-center space-x-2">
+                <i data-lucide="upload" class="w-4 h-4"></i>
+                <span>Carregar PDF / Imagem</span>
+                <input type="file" id="real-exam-file-input" accept=".pdf,image/png,image/jpeg,image/webp" class="hidden" onchange="handleRealFileUpload(this.files[0])">
+              </label>
+
+              <button type="button" onclick="runDemoPdfExtraction()" class="py-3 px-4 bg-[#162529] hover:bg-[#1E3338] text-[#5EEAD4] border border-[#5EEAD4]/30 font-bold text-xs rounded-2xl transition flex items-center justify-center space-x-2">
+                <i data-lucide="file-text" class="w-4 h-4"></i>
+                <span>Testar PDF Demo</span>
+              </button>
+
+              <button type="button" onclick="toggleWebCamera()" id="webcam-toggle-btn" class="py-3 px-4 bg-[#162529] hover:bg-[#1E3338] text-white border border-[#1E3338] font-bold text-xs rounded-2xl transition flex items-center justify-center space-x-2">
+                <i data-lucide="camera" class="w-4 h-4 text-[#B8F04A]"></i>
+                <span>Abrir Câmara Web</span>
+              </button>
+            </div>
+
+            <!-- Painel Câmara Web (getUserMedia) -->
+            <div id="webcam-container" class="hidden p-4 rounded-2xl bg-[#0C1416] border border-[#1E3338] space-y-3">
+              <video id="webcam-video" autoplay playsinline class="w-full max-h-64 rounded-xl bg-black object-cover mx-auto"></video>
+              <canvas id="webcam-canvas" class="hidden"></canvas>
+              <div class="flex justify-center space-x-3">
+                <button type="button" onclick="captureWebCameraPhoto()" class="px-5 py-2 bg-[#B8F04A] text-[#0C1416] font-extrabold text-xs rounded-xl">
+                  📸 Fotografar e Extrair
+                </button>
+                <button type="button" onclick="stopWebCamera()" class="px-4 py-2 bg-[#2A1416] text-red-200 font-bold text-xs rounded-xl">
+                  Fechar Câmara
+                </button>
+              </div>
+            </div>
+
+            <!-- Estado de Extração -->
+            <div id="ocr-loading-box" class="hidden p-4 rounded-2xl bg-[#0C1416] border border-[#B8F04A]/40 text-xs text-[#B8F04A] font-semibold">
+              ⏳ A processar documento no servidor (PyMuPDF / Ollama OCR)...
+            </div>
+
+            <!-- Painel de Revisão Humana antes de Guardar -->
+            <div id="ocr-demo-result" class="hidden text-left p-5 rounded-2xl bg-[#0C1416] border border-[#1E3338] space-y-4">
+              <div class="flex items-center justify-between text-xs">
+                <span class="font-bold text-white flex items-center">
+                  <i data-lucide="check-circle" class="w-4 h-4 text-[#B8F04A] mr-1.5"></i>
+                  <span id="ocr-engine-badge">Revisão Humana Pré-Arquivo</span>
+                </span>
+                <span class="text-[#8DA39E]">Ficheiro: <code id="ocr-filename-label" class="font-mono text-[#5EEAD4]">documento.pdf</code></span>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                <div>
+                  <label class="text-[11px] text-[#8DA39E] block mb-1">Título do Exame</label>
+                  <input type="text" id="review-exam-title" class="w-full bg-[#131F22] text-white border border-[#1E3338] rounded-xl px-3 py-2">
+                </div>
+                <div>
+                  <label class="text-[11px] text-[#8DA39E] block mb-1">Categoria Clínica (8)</label>
+                  <select id="review-exam-category" class="w-full bg-[#131F22] text-white border border-[#1E3338] rounded-xl px-3 py-2">
+                    <option value="blood_tests">Análises ao sangue</option>
+                    <option value="urine">Urina</option>
+                    <option value="imaging">Imagiologia</option>
+                    <option value="cardiology">Cardiologia</option>
+                    <option value="vaccines">Vacinas</option>
+                    <option value="prescriptions">Receitas</option>
+                    <option value="clinical_reports">Relatórios clínicos</option>
+                    <option value="other">Outro</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="text-[11px] text-[#8DA39E] block mb-1">Instituição / Laboratório</label>
+                  <input type="text" id="review-exam-lab" class="w-full bg-[#131F22] text-white border border-[#1E3338] rounded-xl px-3 py-2">
+                </div>
+                <div>
+                  <label class="text-[11px] text-[#8DA39E] block mb-1">Data do Exame</label>
+                  <input type="date" id="review-exam-date" class="w-full bg-[#131F22] text-white border border-[#1E3338] rounded-xl px-3 py-2">
+                </div>
+              </div>
+
+              <div>
+                <span class="text-[11px] text-[#8DA39E] block mb-1">Biomarcadores Extraídos:</span>
+                <div id="review-biomarkers-list" class="bg-[#131F22] rounded-xl p-3 border border-[#1E3338] text-xs font-mono space-y-1 max-h-40 overflow-y-auto"></div>
+              </div>
+
+              <button type="button" onclick="saveReviewedExam()" class="w-full py-3 bg-[#B8F04A] hover:bg-[#C9F762] text-[#0C1416] font-extrabold text-xs rounded-xl transition shadow-[0_0_12px_rgba(184,240,74,0.3)]">
+                ✅ Validar e Guardar na Carteira Clínica (SQLite)
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======================================================== -->
+      <!-- ABA 4: PARTILHA SEGURA & EMERGÊNCIA (ECRÃ 3 MOBILE + IPS) -->
+      <!-- ======================================================== -->
+      <div id="view-cross-border" class="view-panel hidden space-y-6">
+        <div class="bg-gradient-to-r from-[#14231E] via-[#131F22] to-[#0C1416] text-white rounded-3xl p-6 sm:p-8 border border-[#1E3338] shadow-2xl">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div class="space-y-3">
+              <div class="flex items-center space-x-2">
+                <span class="px-2.5 py-0.5 rounded-full bg-[#14332D] text-[#5EEAD4] font-semibold text-xs border border-[#5EEAD4]/30">
+                  REQUISITO 4 · ACESSO MÉDICO NO ESTRANGEIRO
+                </span>
+                <span class="px-2.5 py-0.5 rounded-full bg-[#1E293B] text-[#94A3B8] font-semibold text-xs border border-slate-700">
+                  EHDS / MyHealth@EU / IPS ISO 27269
+                </span>
+              </div>
+              <h2 class="text-2xl font-extrabold tracking-tight">Passaporte Clínico de Emergência Internacional</h2>
+              <p class="text-sm text-[#8DA39E] max-w-2xl leading-relaxed">
+                Em caso de doença ou acidente fora de Portugal, o médico ou hospital que o atende pode aceder instantaneamente ao seu resumo clínico e exames traduzidos, sem precisar de instalar qualquer aplicação.
+              </p>
+            </div>
+
+            <div class="bg-[#0C1416]/90 p-4 rounded-2xl border border-[#1E3338] space-y-2">
+              <span class="text-xs font-semibold text-[#8DA39E] block">Idioma da Equipa Médica no Exterior:</span>
+              <div class="flex flex-wrap gap-1.5" id="language-switcher">
+                <button onclick="changeLanguage('en')" id="lang-en" class="lang-btn px-2.5 py-1 rounded-xl bg-[#B8F04A] text-[#0C1416] text-xs font-extrabold transition">🇬🇧 English</button>
+                <button onclick="changeLanguage('es')" id="lang-es" class="lang-btn px-2.5 py-1 rounded-xl bg-[#162529] hover:bg-[#1E3338] text-white text-xs font-medium transition">🇪🇸 Español</button>
+                <button onclick="changeLanguage('fr')" id="lang-fr" class="lang-btn px-2.5 py-1 rounded-xl bg-[#162529] hover:bg-[#1E3338] text-white text-xs font-medium transition">🇫🇷 Français</button>
+                <button onclick="changeLanguage('de')" id="lang-de" class="lang-btn px-2.5 py-1 rounded-xl bg-[#162529] hover:bg-[#1E3338] text-white text-xs font-medium transition">🇩🇪 Deutsch</button>
+                <button onclick="changeLanguage('pt')" id="lang-pt" class="lang-btn px-2.5 py-1 rounded-xl bg-[#162529] hover:bg-[#1E3338] text-white text-xs font-medium transition">🇵🇹 Português</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div class="bg-[#131F22] rounded-3xl border border-[#1E3338] p-6 shadow-xl flex flex-col items-center text-center justify-between">
+            <div class="w-full space-y-4">
+              <h3 class="text-base font-extrabold text-white">Partilha segura</h3>
+              <div class="my-4 mx-auto w-24 h-24 rounded-full bg-[#14261F] border border-[#B8F04A]/30 flex items-center justify-center text-[#B8F04A] shadow-[0_0_30px_rgba(184,240,74,0.25)]">
+                <i data-lucide="lock" class="w-10 h-10 text-[#B8F04A]"></i>
+              </div>
+              <p class="text-sm font-bold text-white">Acesso com prazo</p>
+              <p class="text-xs text-[#8DA39E]">Concedido a profissionais autorizados.</p>
+
+              <div class="space-y-2.5 text-left w-full pt-2">
+                <div class="p-3 rounded-2xl bg-[#162529] border border-[#1E3338] flex items-center justify-between">
+                  <div class="flex items-center space-x-3">
+                    <div class="p-1.5 rounded-lg bg-[#14231E] text-[#B8F04A]">
+                      <i data-lucide="user-check" class="w-4 h-4"></i>
+                    </div>
+                    <div>
+                      <span class="text-xs font-bold text-white block">Dra. Marta Fernandes</span>
+                      <span class="text-[10px] text-[#8DA39E]">Médica de Família · USF São João</span>
+                    </div>
+                  </div>
+                  <i data-lucide="check" class="w-4 h-4 text-[#B8F04A]"></i>
+                </div>
+              </div>
+            </div>
+
+            <div class="w-full pt-6 mt-6 border-t border-[#1E3338] flex flex-col items-center">
+              <div class="flex items-center space-x-2 text-xs font-bold text-white mb-3">
+                <i data-lucide="qr-code" class="w-4 h-4 text-[#B8F04A]"></i>
+                <span>QR Code de Emergência (Viagens)</span>
+              </div>
+              <div class="p-3 bg-white rounded-2xl shadow-lg border-2 border-[#B8F04A]">
+                <svg class="w-36 h-36 text-[#0C1416]" viewBox="0 0 100 100" fill="currentColor">
+                  <rect x="5" y="5" width="25" height="25" fill="#0C1416" rx="4" />
+                  <rect x="9" y="9" width="17" height="17" fill="white" rx="2" />
+                  <rect x="13" y="13" width="9" height="9" fill="#0C1416" />
+                  <rect x="70" y="5" width="25" height="25" fill="#0C1416" rx="4" />
+                  <rect x="74" y="9" width="17" height="17" fill="white" rx="2" />
+                  <rect x="78" y="13" width="9" height="9" fill="#0C1416" />
+                  <rect x="5" y="70" width="25" height="25" fill="#0C1416" rx="4" />
+                  <rect x="9" y="74" width="17" height="17" fill="white" rx="2" />
+                  <rect x="13" y="78" width="9" height="9" fill="#0C1416" />
+                  <rect x="35" y="10" width="8" height="8" fill="#0C1416" />
+                  <rect x="50" y="15" width="10" height="6" fill="#0C1416" />
+                  <rect x="40" y="25" width="15" height="8" fill="#0C1416" />
+                  <rect x="15" y="40" width="12" height="12" fill="#0C1416" />
+                  <rect x="35" y="45" width="30" height="20" fill="#14332D" rx="2" />
+                  <rect x="75" y="40" width="15" height="8" fill="#0C1416" />
+                  <rect x="70" y="55" width="20" height="10" fill="#0C1416" />
+                  <rect x="40" y="75" width="25" height="15" fill="#0C1416" />
+                  <rect x="75" y="75" width="15" height="15" fill="#0C1416" />
+                </svg>
+              </div>
+              <span class="mt-3 font-mono text-[10px] text-[#5EEAD4] font-bold bg-[#14332D] px-2.5 py-1 rounded-full border border-[#5EEAD4]/30">
+                AUTH_PASS: emg_92f4b1a8
+              </span>
+            </div>
+          </div>
+
+          <div class="lg:col-span-2 bg-[#131F22] rounded-3xl border border-[#1E3338] p-6 shadow-xl space-y-5">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-[#1E3338] gap-3">
+              <div>
+                <span class="text-[10px] font-bold text-[#5EEAD4] bg-[#14332D] px-2.5 py-0.5 rounded-full border border-[#5EEAD4]/30">
+                  INTERNATIONAL PATIENT SUMMARY (EN ISO 27269 / HL7 FHIR IPS)
+                </span>
+                <h3 class="text-base font-bold text-white mt-1.5" id="abroad-portal-title">
+                  Foreign Healthcare Provider Clinical View
+                </h3>
+              </div>
+              <span class="text-xs font-semibold px-3 py-1 rounded-full bg-[#162529] text-[#8DA39E] flex items-center border border-[#1E3338]">
+                <i data-lucide="lock" class="w-3.5 h-3.5 mr-1.5 text-[#B8F04A]"></i>
+                <span id="label-audited">Break-Glass Audited Session</span>
+              </span>
+            </div>
+
+            <div class="space-y-2.5">
+              <h4 class="text-xs font-bold text-[#FCA5A5] uppercase tracking-wider flex items-center">
+                <i data-lucide="alert-octagon" class="w-4 h-4 text-red-400 mr-1.5"></i>
+                <span id="label-critical-alerts">Critical Clinical Alerts</span>
+              </h4>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="critical-alerts-container"></div>
+            </div>
+
+            <div class="space-y-2.5">
+              <h4 class="text-xs font-bold text-white uppercase tracking-wider flex items-center">
+                <i data-lucide="pill" class="w-4 h-4 text-[#B8F04A] mr-1.5"></i>
+                <span id="label-medications">Active Medications & ATC Codes</span>
+              </h4>
+              <div class="p-4 rounded-2xl border border-[#1E3338] bg-[#0C1416] space-y-2.5" id="medications-container"></div>
+            </div>
+
+            <div class="space-y-2.5">
+              <h4 class="text-xs font-bold text-white uppercase tracking-wider flex items-center">
+                <i data-lucide="flask-conical" class="w-4 h-4 text-[#5EEAD4] mr-1.5"></i>
+                <span id="label-recent-labs">Recent Laboratory Findings (LOINC Normalized)</span>
+              </h4>
+              <div class="overflow-x-auto rounded-2xl border border-[#1E3338]">
+                <table class="w-full text-left text-xs">
+                  <thead class="bg-[#162529] text-[#8DA39E] font-semibold border-b border-[#1E3338] uppercase tracking-wider text-[10px]">
+                    <tr>
+                      <th class="py-3 px-4" id="th-test">Test / Biomarker</th>
+                      <th class="py-3 px-4">LOINC</th>
+                      <th class="py-3 px-4" id="th-value">Value</th>
+                      <th class="py-3 px-4" id="th-ref">Ref. Range</th>
+                      <th class="py-3 px-4">Date</th>
+                    </tr>
+                  </thead>
+                  <tbody id="abroad-labs-table" class="divide-y divide-[#1E3338] font-mono text-[11px] bg-[#0C1416]"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======================================================== -->
+      <!-- ABA 5: MEDIÇÕES CLÍNICAS & EVENTOS (TENSÃO, SPO2, EVENTOS) -->
+      <!-- ======================================================== -->
+      <div id="view-measurements-events" class="view-panel hidden space-y-6">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          
+          <!-- Registo de Medição Manual -->
+          <div class="bg-[#131F22] rounded-3xl border border-[#1E3338] p-6 shadow-xl space-y-4">
+            <h2 class="text-lg font-extrabold text-white flex items-center space-x-2">
+              <i data-lucide="heart-pulse" class="w-5 h-5 text-[#B8F04A]"></i>
+              <span>Registar Medição Clínica</span>
+            </h2>
+            <p class="text-xs text-[#8DA39E]">Registe valores de Tensão Arterial (Sistólica/Diastólica + FC) ou Oximetria (SpO₂).</p>
+            <div class="grid grid-cols-2 gap-3 text-xs">
+              <div class="col-span-2">
+                <label class="text-[11px] text-[#8DA39E] block mb-1">Tipo de Medição</label>
+                <select id="meas-kind" onchange="toggleMeasurementFields()" class="w-full bg-[#0C1416] text-white border border-[#1E3338] rounded-xl px-3 py-2">
+                  <option value="pressure">Tensão Arterial (mmHg) & Frequência Cardíaca</option>
+                  <option value="spo2">Saturação de Oxigénio (SpO₂ %)</option>
+                </select>
+              </div>
+              <div id="meas-bp-fields" class="col-span-2 grid grid-cols-3 gap-2">
+                <div>
+                  <label class="text-[11px] text-[#8DA39E] block mb-1">Sistólica</label>
+                  <input type="number" id="meas-sys" value="124" class="w-full bg-[#0C1416] text-[#B8F04A] font-mono font-bold border border-[#1E3338] rounded-xl px-3 py-2">
+                </div>
+                <div>
+                  <label class="text-[11px] text-[#8DA39E] block mb-1">Diastólica</label>
+                  <input type="number" id="meas-dia" value="78" class="w-full bg-[#0C1416] text-[#B8F04A] font-mono font-bold border border-[#1E3338] rounded-xl px-3 py-2">
+                </div>
+                <div>
+                  <label class="text-[11px] text-[#8DA39E] block mb-1">Pulso (bpm)</label>
+                  <input type="number" id="meas-hr" value="72" class="w-full bg-[#0C1416] text-white font-mono border border-[#1E3338] rounded-xl px-3 py-2">
+                </div>
+              </div>
+              <div id="meas-spo2-fields" class="hidden col-span-2">
+                <label class="text-[11px] text-[#8DA39E] block mb-1">SpO₂ (%)</label>
+                <input type="number" id="meas-spo2" value="98" min="50" max="100" class="w-full bg-[#0C1416] text-[#B8F04A] font-mono font-bold border border-[#1E3338] rounded-xl px-3 py-2">
+              </div>
+              <div class="col-span-2">
+                <label class="text-[11px] text-[#8DA39E] block mb-1">Notas (opcional)</label>
+                <input type="text" id="meas-notes" placeholder="Ex: Em repouso após pequeno-almoço" class="w-full bg-[#0C1416] text-white border border-[#1E3338] rounded-xl px-3 py-2">
+              </div>
+            </div>
+            <button type="button" onclick="submitMeasurement()" class="w-full py-2.5 bg-[#B8F04A] hover:bg-[#C9F762] text-[#0C1416] font-extrabold text-xs rounded-xl transition">
+              + Guardar Medição
+            </button>
+
+            <div class="pt-3 border-t border-[#1E3338]">
+              <h3 class="text-xs font-bold text-[#8DA39E] uppercase mb-2">Últimas Medições</h3>
+              <div id="measurements-list" class="space-y-2 max-h-64 overflow-y-auto text-xs"></div>
+            </div>
+          </div>
+
+          <!-- Registo de Evento Clínico -->
+          <div class="bg-[#131F22] rounded-3xl border border-[#1E3338] p-6 shadow-xl space-y-4">
+            <h2 class="text-lg font-extrabold text-white flex items-center space-x-2">
+              <i data-lucide="calendar-plus" class="w-5 h-5 text-[#5EEAD4]"></i>
+              <span>Registar Evento Clínico</span>
+            </h2>
+            <p class="text-xs text-[#8DA39E]">Registe alterações de medicação, sintomas, cirurgias ou consultas. Aparecem marcados nos gráficos de evolução.</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+              <div class="sm:col-span-2">
+                <label class="text-[11px] text-[#8DA39E] block mb-1">Título do Evento</label>
+                <input type="text" id="ev-title" placeholder="Ex: Ajuste de Metformina 850mg" class="w-full bg-[#0C1416] text-white border border-[#1E3338] rounded-xl px-3 py-2">
+              </div>
+              <div>
+                <label class="text-[11px] text-[#8DA39E] block mb-1">Tipo</label>
+                <select id="ev-type" class="w-full bg-[#0C1416] text-white border border-[#1E3338] rounded-xl px-3 py-2">
+                  <option value="medication">Medicação / Ajuste</option>
+                  <option value="symptom">Sintoma</option>
+                  <option value="consultation">Consulta</option>
+                  <option value="hospitalization">Internamento</option>
+                  <option value="other">Outro</option>
+                </select>
+              </div>
+              <div>
+                <label class="text-[11px] text-[#8DA39E] block mb-1">Data</label>
+                <input type="date" id="ev-date" value="2026-11-15" class="w-full bg-[#0C1416] text-white border border-[#1E3338] rounded-xl px-3 py-2">
+              </div>
+              <div class="sm:col-span-2">
+                <label class="text-[11px] text-[#8DA39E] block mb-1">Descrição / Notas Clínicas</label>
+                <input type="text" id="ev-notes" placeholder="Ex: Tolerância boa, repetir HbA1c em 3 meses" class="w-full bg-[#0C1416] text-white border border-[#1E3338] rounded-xl px-3 py-2">
+              </div>
+            </div>
+            <button type="button" onclick="submitClinicalEvent()" class="w-full py-2.5 bg-[#14332D] hover:bg-[#1E473F] text-[#5EEAD4] border border-[#5EEAD4]/40 font-extrabold text-xs rounded-xl transition">
+              + Registar Evento Clínico
+            </button>
+
+            <div class="pt-3 border-t border-[#1E3338]">
+              <h3 class="text-xs font-bold text-[#8DA39E] uppercase mb-2">Eventos Registados</h3>
+              <div id="events-list" class="space-y-2 max-h-64 overflow-y-auto text-xs"></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ======================================================== -->
+      <!-- ABA 6: APRENDER — BIBLIOTECA CLÍNICA EDUCATIVA (23 FICHAS) -->
+      <!-- ======================================================== -->
+      <div id="view-learning" class="view-panel hidden space-y-6">
+        <div class="bg-[#131F22] rounded-3xl border border-[#1E3338] p-6 shadow-xl space-y-5">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#1E3338] pb-4">
+            <div>
+              <h2 class="text-xl font-extrabold text-white flex items-center space-x-2">
+                <i data-lucide="book-open" class="w-5 h-5 text-[#B8F04A]"></i>
+                <span>Biblioteca Educativa PULSO (6 Categorias · 23 Fichas)</span>
+              </h2>
+              <p class="text-xs text-[#8DA39E] mt-1">Explicações claras e baseadas em evidência sobre biomarcadores, exames e medições.</p>
+            </div>
+            <input type="text" id="learning-search-input" oninput="renderLearningCards()" placeholder="Pesquisar ficha..." class="text-xs bg-[#0C1416] text-white border border-[#1E3338] rounded-xl px-3.5 py-2 focus:outline-none focus:border-[#B8F04A]">
+          </div>
+
+          <div id="learning-category-pills" class="flex flex-wrap gap-2"></div>
+          <div id="learning-cards-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- MODAL: EDITAR CLASSIFICAÇÃO DE EXAME (SEM DUPLICAR ORIGINAL) -->
+    <div id="edit-exam-modal" class="hidden fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-4">
+      <div class="bg-[#131F22] border border-[#1E3338] rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+        <div class="flex items-center justify-between">
+          <h3 class="text-base font-extrabold text-white">Editar Classificação do Exame</h3>
+          <button onclick="document.getElementById('edit-exam-modal').classList.add('hidden')" class="text-[#8DA39E] hover:text-white">✕</button>
+        </div>
+        <input type="hidden" id="edit-exam-id">
+        <div class="space-y-3 text-xs">
+          <div>
+            <label class="text-[11px] text-[#8DA39E] block mb-1">Título</label>
+            <input type="text" id="edit-exam-title" class="w-full bg-[#0C1416] text-white border border-[#1E3338] rounded-xl px-3 py-2">
+          </div>
+          <div>
+            <label class="text-[11px] text-[#8DA39E] block mb-1">Categoria Clínica</label>
+            <select id="edit-exam-category" class="w-full bg-[#0C1416] text-white border border-[#1E3338] rounded-xl px-3 py-2">
+              <option value="blood_tests">Análises ao sangue</option>
+              <option value="urine">Urina</option>
+              <option value="imaging">Imagiologia</option>
+              <option value="cardiology">Cardiologia</option>
+              <option value="vaccines">Vacinas</option>
+              <option value="prescriptions">Receitas</option>
+              <option value="clinical_reports">Relatórios clínicos</option>
+              <option value="other">Outro</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-[11px] text-[#8DA39E] block mb-1">Proveniência</label>
+            <select id="edit-exam-source" class="w-full bg-[#0C1416] text-white border border-[#1E3338] rounded-xl px-3 py-2">
+              <option value="SNS">SNS</option>
+              <option value="Privado">Privado</option>
+            </select>
+          </div>
+        </div>
+        <div class="flex justify-end space-x-2 pt-2">
+          <button onclick="document.getElementById('edit-exam-modal').classList.add('hidden')" class="px-4 py-2 rounded-xl bg-[#162529] text-[#8DA39E] text-xs font-bold">Cancelar</button>
+          <button onclick="saveExamClassificationEdit()" class="px-4 py-2 rounded-xl bg-[#B8F04A] text-[#0C1416] text-xs font-extrabold">Guardar Alteração</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: DETALHE EDUCATIVO (ÍCONE i) -->
+    <div id="learning-detail-modal" class="hidden fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-4">
+      <div class="bg-[#131F22] border border-[#1E3338] rounded-3xl max-w-lg w-full p-6 space-y-3 shadow-2xl">
+        <div class="flex items-center justify-between">
+          <span id="ldm-cat" class="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-[#14332D] text-[#5EEAD4]"></span>
+          <button onclick="document.getElementById('learning-detail-modal').classList.add('hidden')" class="text-[#8DA39E] hover:text-white">✕</button>
+        </div>
+        <h3 id="ldm-title" class="text-lg font-extrabold text-white"></h3>
+        <p id="ldm-summary" class="text-xs text-[#E4ECE8] leading-relaxed"></p>
+        <div class="p-3 rounded-xl bg-[#0C1416] border border-[#1E3338] text-xs text-[#8DA39E]" id="ldm-why"></div>
+      </div>
+    </div>
+
+    <!-- Rodapé -->
+    <footer class="bg-[#090F11] border-t border-[#1E3338] py-5 mt-10">
+      <div class="max-w-7xl mx-auto px-4 text-center text-xs text-[#8DA39E]">
+        <p>Projeto <strong>PULSO</strong> · PENGEL 2026/27 · ISEP (Departamento de Engenharia Eletrotécnica e de Computadores)</p>
+        <p class="text-[11px] text-[#5F7571] mt-1">Sessão Clínica Autorizada por Código Temporário de 8 Dígitos.</p>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- Lógica JavaScript Interativa -->
+  <script>
+    lucide.createIcons();
+
+    // ============================================================
+    // ESTADO DE AUTENTICAÇÃO DUPLA (MÉDICA / PACIENTE) & SESSÃO
+    // ============================================================
+    let doctorAuthenticated = false;
+    let doctorTimerInterval = null;
+    let doctorRemainingSeconds = 3600;
+    let currentAuthState = { role: null, patient: null, doctor: null, expiresAt: null };
+    let liveRecordsState = { exams: [], measurements: [], events: [], auditLogs: [] };
+    let catalogsState = { categories: [], learningTopics: [], experience: null };
+    let pendingExtraction = null;
+    let activeWebcamStream = null;
+    let selectedLearningCategory = 'all';
+
+    function switchAuthTab(tab) {
+      ['doctor', 'patient', 'register'].forEach(t => {
+        const btn = document.getElementById('auth-tab-' + t);
+        const panel = document.getElementById('auth-panel-' + t);
+        if (btn) {
+          btn.className = t === tab
+            ? 'py-2 px-2 rounded-xl text-xs font-extrabold bg-[#B8F04A] text-[#0C1416] transition'
+            : 'py-2 px-2 rounded-xl text-xs font-bold text-[#8DA39E] hover:text-white transition';
+        }
+        if (panel) panel.classList.toggle('hidden', t !== tab);
+      });
+      document.getElementById('login-error-alert').classList.add('hidden');
+    }
+
+    function showAuthError(msg) {
+      const errorAlert = document.getElementById('login-error-alert');
+      const errorText = document.getElementById('login-error-text');
+      if (errorText) errorText.innerText = msg;
+      if (errorAlert) errorAlert.classList.remove('hidden');
+    }
+
+    function handleCodeInput(el) {
+      let val = el.value.replace(/\D/g, '').substring(0, 8);
+      el.value = val.length > 4 ? val.substring(0, 4) + ' ' + val.substring(4) : val;
+      document.getElementById('login-error-alert').classList.add('hidden');
+    }
+
+    function updateDetectedMobileCode() {}
+
+    async function simulateQrScan() {
+      let codeToFill = "7492 1830";
+      try {
+        const stored = localStorage.getItem('pulso_active_access_grant');
+        if (stored) {
+          const grant = JSON.parse(stored);
+          if (grant?.formattedCode) codeToFill = grant.formattedCode;
+          else if (grant?.code) codeToFill = grant.code.substring(0, 4) + ' ' + grant.code.substring(4);
+        }
+      } catch (e) {}
+      const input = document.getElementById('doctor-login-code-input');
+      if (input) {
+        input.value = codeToFill;
+        handleCodeInput(input);
+      }
+      setTimeout(() => validateDoctorAccess(), 250);
+    }
+
+    async function validateDoctorAccess() {
+      const input = document.getElementById('doctor-login-code-input');
+      const licenseInput = document.getElementById('doctor-license-input');
+      const rawEntered = input ? input.value.replace(/\s+/g, '') : '';
+      const licenseNumber = licenseInput ? licenseInput.value.trim() : '48192';
+
+      if (rawEntered.length < 8) {
+        showAuthError("Por favor, insira o código completo de 8 dígitos facultado pelo doente.");
+        return;
+      }
+
+      if (window.PulsoAPI) {
+        try {
+          const res = await window.PulsoAPI.loginDoctor({ licenseNumber, accessCode: rawEntered });
+          await enterAuthenticatedWorkspace(res, input ? input.value : rawEntered);
+          return;
+        } catch (err) {
+          // Fallback local para abertura offline via file://
+          if (err.status && err.status >= 400 && err.status < 500) {
+            showAuthError(err.message || "Código incorreto ou expirado.");
+            return;
+          }
+        }
+      }
+
+      // Fallback offline caso o backend FastAPI não esteja a correr
+      let validLocalCode = "74921830";
+      let durationLabel = "1 Hora";
+      let remainingSeconds = 3600;
+      try {
+        const stored = localStorage.getItem('pulso_active_access_grant');
+        if (stored) {
+          const grant = JSON.parse(stored);
+          if (grant?.code) validLocalCode = grant.code;
+          if (grant?.durationLabel) durationLabel = grant.durationLabel;
+          if (grant?.expiresInSeconds) remainingSeconds = grant.expiresInSeconds;
+        }
+      } catch (e) {}
+
+      if (rawEntered !== validLocalCode && rawEntered !== "74921830") {
+        showAuthError("Código incorreto. Confirme com o utente o código obtido no telemóvel.");
+        return;
+      }
+      await enterAuthenticatedWorkspace({
+        role: 'doctor',
+        patient: { fullName: 'Sr. António Silva', snsNumber: '234891024', birthDate: '1958-04-12' },
+        doctor: { fullName: 'Dra. Marta Fernandes', licenseNumber: licenseNumber || '48192', clinic: 'USF São João' },
+        durationLabel,
+        remainingSeconds
+      }, input ? input.value : validLocalCode);
+    }
+
+    async function loginAsPatient() {
+      const snsNumber = document.getElementById('patient-login-sns').value.trim();
+      const password = document.getElementById('patient-login-password').value;
+      if (!/^\d{9}$/.test(snsNumber)) {
+        showAuthError("O Número de Utente SNS deve ter exatamente 9 dígitos.");
+        return;
+      }
+      try {
+        const res = await window.PulsoAPI.loginPatient({ snsNumber, password });
+        await enterAuthenticatedWorkspace(res);
+      } catch (err) {
+        showAuthError(err.message || "Credenciais inválidas.");
+      }
+    }
+
+    async function registerNewPatient() {
+      const snsNumber = document.getElementById('reg-sns').value.trim();
+      const fullName = document.getElementById('reg-name').value.trim();
+      const birthDate = document.getElementById('reg-birth').value;
+      const email = document.getElementById('reg-email').value.trim();
+      const password = document.getElementById('reg-password').value;
+
+      if (!/^\d{9}$/.test(snsNumber)) {
+        showAuthError("O Número de Utente SNS deve ter exatamente 9 dígitos.");
+        return;
+      }
+      if (!fullName || password.length < 6) {
+        showAuthError("Preencha o nome completo e uma palavra-passe com pelo menos 6 caracteres.");
+        return;
+      }
+      try {
+        const res = await window.PulsoAPI.registerPatient({ snsNumber, fullName, birthDate, password, email });
+        await enterAuthenticatedWorkspace(res);
+      } catch (err) {
+        showAuthError(err.message || "Não foi possível registar o utente.");
+      }
+    }
+
+    async function enterAuthenticatedWorkspace(sessionInfo, displayCode = '') {
+      if (window.PulsoAPI && !sessionInfo.patient) {
+        try {
+          const fullMe = await window.PulsoAPI.me();
+          if (fullMe && fullMe.authenticated) sessionInfo = fullMe;
+        } catch (e) {}
+      }
+      currentAuthState = sessionInfo;
+      doctorAuthenticated = true;
+
+      document.getElementById('doctor-login-view').classList.add('hidden');
+      document.getElementById('patient-records-view').classList.remove('hidden');
+      document.getElementById('header-logout-btn').classList.remove('hidden');
+
+      const p = sessionInfo.patient || { fullName: 'Sr. António Silva', snsNumber: '234891024' };
+      const formattedSns = (p.snsNumber || '').replace(/(\d{3})(\d{3})(\d{3})/, '$1 $2 $3');
+      document.getElementById('banner-patient-name').innerText = p.fullName;
+      document.getElementById('banner-patient-sns').innerText = `SNS #${formattedSns}`;
+
+      const isDoctor = sessionInfo.role === 'doctor';
+      document.getElementById('patient-share-controls').classList.toggle('hidden', isDoctor);
+      document.getElementById('doctor-timer-box').classList.toggle('hidden', !isDoctor);
+
+      if (isDoctor) {
+        const doc = sessionInfo.doctor || { fullName: 'Dra. Marta Fernandes', clinic: 'USF São João', licenseNumber: '48192' };
+        document.getElementById('header-user-name').innerText = doc.fullName;
+        document.getElementById('header-user-sub').innerText = `${doc.clinic || 'USF São João'} · Cédula #${doc.licenseNumber}`;
+        document.getElementById('header-user-avatar').innerText = doc.fullName.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
+        document.getElementById('banner-role-badge').innerText = '🩺 SESSÃO CLÍNICA ATIVA (MÉDICA/O)';
+        document.getElementById('banner-sub-line').innerHTML = `Médica: <span class="text-[#B8F04A]">${doc.fullName}</span> (${doc.clinic || 'USF São João'}) · Código Validado: <code id="banner-code-display" class="font-mono text-white bg-[#0C1416] px-2 py-0.5 rounded border border-[#1E3338]">${displayCode || 'Ativo'}</code>`;
+        document.getElementById('banner-logout-label').innerText = 'Terminar Consulta';
+        if (typeof sessionInfo.remainingSeconds === 'number') {
+          doctorRemainingSeconds = Math.max(60, sessionInfo.remainingSeconds);
+        } else if (sessionInfo.expiresAt) {
+          const expMs = typeof sessionInfo.expiresAt === 'number' ? sessionInfo.expiresAt * 1000 : new Date(sessionInfo.expiresAt).getTime();
+          doctorRemainingSeconds = Math.max(60, Math.floor((expMs - Date.now()) / 1000));
+        } else {
+          doctorRemainingSeconds = 3600;
+        }
+        startDoctorCountdown();
+      } else {
+        document.getElementById('header-user-name').innerText = p.fullName;
+        document.getElementById('header-user-sub').innerText = `Utente SNS #${formattedSns} · Soberania Total`;
+        document.getElementById('header-user-avatar').innerText = p.fullName.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
+        document.getElementById('banner-role-badge').innerText = '👤 CARTEIRA PESSOAL DO UTENTE';
+        document.getElementById('banner-sub-line').innerHTML = `Email de Ingestão IA: <code class="font-mono text-[#B8F04A] bg-[#0C1416] px-2 py-0.5 rounded border border-[#1E3338]">${p.intakeEmail || 'utente@inbox.pulso.health'}</code> · Controlo total sobre partilhas e registos`;
+        document.getElementById('banner-logout-label').innerText = 'Terminar Sessão';
+        if (doctorTimerInterval) clearInterval(doctorTimerInterval);
+      }
+
+      if (p.preferences) {
+        applyThemeAndExperience(p.preferences.theme || 'dark', p.preferences.mode || 'balanced');
+      }
+
+      await refreshClinicalWorkspace();
+      switchTab('dashboard');
+      lucide.createIcons();
+    }
+
+    async function refreshClinicalWorkspace() {
+      if (!window.PulsoAPI) return;
+      try {
+        const [records, catalogs] = await Promise.all([
+          window.PulsoAPI.listRecords(),
+          window.PulsoAPI.getCatalogs()
+        ]);
+        liveRecordsState = records;
+        catalogsState = {
+          learningTopics: catalogs.learning?.topics || [],
+          categories: catalogs.registration?.categories || [],
+          laboratory: catalogs.laboratory || {}
+        };
+        renderHistoryList();
+        renderMeasurementsAndEvents();
+        renderLearningCards();
+        renderChart();
+      } catch (err) {
+        console.warn('Falha ao sincronizar com servidor, mantendo vista local:', err);
+      }
+    }
+
+    function startDoctorCountdown() {
+      if (doctorTimerInterval) clearInterval(doctorTimerInterval);
+      const timerEl = document.getElementById('banner-countdown');
+      doctorTimerInterval = setInterval(() => {
+        doctorRemainingSeconds--;
+        if (doctorRemainingSeconds <= 0) {
+          clearInterval(doctorTimerInterval);
+          terminateDoctorSession(true);
+          return;
+        }
+        const hours = Math.floor(doctorRemainingSeconds / 3600);
+        const mins = Math.floor((doctorRemainingSeconds % 3600) / 60);
+        const secs = doctorRemainingSeconds % 60;
+        let str = hours > 0 ? `${hours}h ` : '';
+        str += `${String(mins).padStart(2, '0')}m ${String(secs).padStart(2, '0')}s`;
+        if (timerEl) timerEl.innerText = `Tempo Restante: ${str}`;
+      }, 1000);
+    }
+
+    async function terminateDoctorSession(isExpired = false) {
+      doctorAuthenticated = false;
+      if (doctorTimerInterval) clearInterval(doctorTimerInterval);
+      if (window.PulsoAPI) {
+        try { await window.PulsoAPI.logout(); } catch (e) {}
+      }
+      localStorage.setItem('pulso_session_status', 'terminated');
+      document.getElementById('patient-records-view').classList.add('hidden');
+      document.getElementById('doctor-login-view').classList.remove('hidden');
+      document.getElementById('header-logout-btn').classList.add('hidden');
+      document.getElementById('header-user-name').innerText = 'Portal PULSO';
+      document.getElementById('header-user-sub').innerText = 'Acesso Clínico & Utente';
+      document.getElementById('header-user-avatar').innerText = 'PL';
+      const input = document.getElementById('doctor-login-code-input');
+      if (input) input.value = '';
+      lucide.createIcons();
+      if (isExpired) alert("🔒 A autorização de acesso concedida pelo utente expirou.");
+    }
+
+    async function patientQuickShareCode() {
+      if (!window.PulsoAPI) return;
+      try {
+        const res = await window.PulsoAPI.createShareCode('1h');
+        const fmt = res.formattedCode || res.code;
+        alert(`🔑 Código de Partilha Temporária (1 Hora) obtido:\n\n${fmt}\n\nForneça este código à sua médica para iniciar a consulta.`);
+      } catch (err) {
+        alert(err.message || 'Erro ao obter código.');
+      }
+    }
+
+    // Escutar eventos do telemóvel em tempo real
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'pulso_active_access_grant') {
+        updateDetectedMobileCode();
+      }
+      if (e.key === 'pulso_session_status' && e.newValue === 'terminated' && doctorAuthenticated) {
+        terminateDoctorSession(false);
+      }
+    });
+
+    window.addEventListener('message', (e) => {
+      if (e.data && e.data.type === 'PULSO_CODE_GENERATED') {
+        updateDetectedMobileCode();
+      }
+    });
+
+    // Gestão de Abas Clínicas
+    function switchTab(tabId) {
+      document.querySelectorAll('.view-panel').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('text-[#0C1416]', 'bg-[#B8F04A]', 'shadow-[0_0_15px_rgba(184,240,74,0.3)]', 'font-bold');
+        btn.classList.add('text-[#8DA39E]', 'font-semibold');
+      });
+
+      const activeView = document.getElementById('view-' + tabId);
+      const activeBtn = document.getElementById('tab-' + tabId);
+      if (activeView) activeView.classList.remove('hidden');
+      if (activeBtn) {
+        activeBtn.classList.remove('text-[#8DA39E]', 'font-semibold');
+        activeBtn.classList.add('text-[#0C1416]', 'bg-[#B8F04A]', 'shadow-[0_0_15px_rgba(184,240,74,0.3)]', 'font-bold');
+      }
+      lucide.createIcons();
+
+      if (tabId === 'dashboard') {
+        renderChart();
+      }
+    }
+
+    function copyEmail() {
+      navigator.clipboard.writeText('antonio.silva@inbox.pulso.health');
+      alert('Endereço de email copiado com sucesso:\nantonio.silva@inbox.pulso.health');
+    }
+
+    // Dados do Gráfico de Tendências
+    const biomarkerData = {
+      glucose: {
+        label: 'Glicose em Jejum (mg/dL)',
+        unit: 'mg/dL',
+        latestValue: '94',
+        refText: 'Ref.: 70 – 100 mg/dL',
+        statusText: 'Dentro do intervalo',
+        dates: ['15 fev 2024', '22 mai 2024', '10 out 2024', '12 dez 2024', '10 jan 2025', '04 nov 2026'],
+        values: [120, 110, 105, 98, 96, 94],
+        refMin: 70,
+        refMax: 100,
+        color: '#B8F04A'
+      },
+      creatinine: {
+        label: 'Creatinina Sérica (mg/dL)',
+        unit: 'mg/dL',
+        latestValue: '0,98',
+        refText: 'Ref.: 0,70 – 1,20 mg/dL',
+        statusText: 'Função Renal Ótima',
+        dates: ['15 fev 2024', '22 mai 2024', '10 out 2024', '12 dez 2024', '10 jan 2025', '04 nov 2026'],
+        values: [1.30, 1.25, 1.18, 1.12, 1.05, 0.98],
+        refMin: 0.70,
+        refMax: 1.20,
+        color: '#B8F04A'
+      },
+      cholesterol: {
+        label: 'Colesterol LDL (mg/dL)',
+        unit: 'mg/dL',
+        latestValue: '182',
+        refText: 'Ref.: < 190 mg/dL',
+        statusText: 'Dentro do intervalo',
+        dates: ['15 fev 2024', '22 mai 2024', '10 out 2024', '12 dez 2024', '10 jan 2025', '04 nov 2026'],
+        values: [215, 204, 198, 192, 186, 182],
+        refMin: 50,
+        refMax: 190,
+        color: '#B8F04A'
+      },
+      hba1c: {
+        label: 'Hemoglobina Glicada HbA1c (%)',
+        unit: '%',
+        latestValue: '5,9',
+        refText: 'Ref.: 4,0 – 5,7 %',
+        statusText: 'Ligeiramente Elevada',
+        dates: ['15 fev 2024', '22 mai 2024', '10 out 2024', '12 dez 2024', '10 jan 2025', '04 nov 2026'],
+        values: [7.2, 6.8, 6.5, 6.3, 6.1, 5.9],
+        refMin: 4.0,
+        refMax: 5.7,
+        color: '#B8F04A'
+      }
+    };
+
+    let chartInstance = null;
+    function renderChart() {
+      const ctx = document.getElementById('trendChart');
+      if (!ctx) return;
+      const select = document.getElementById('biomarker-select');
+      const selected = select ? select.value : 'glucose';
+      const data = biomarkerData[selected];
+
+      const valEl = document.getElementById('metric-large-value');
+      const unitEl = document.getElementById('metric-large-unit');
+      const badgeEl = document.getElementById('metric-status-badge');
+      const refEl = document.getElementById('metric-ref-range');
+      if (valEl) valEl.innerText = data.latestValue;
+      if (unitEl) unitEl.innerText = data.unit;
+      if (badgeEl) badgeEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-[#B8F04A] mr-1.5 shadow-[0_0_6px_#B8F04A]"></span> ${data.statusText}`;
+      if (refEl) refEl.innerText = data.refText;
+
+      if (chartInstance) chartInstance.destroy();
+
+      chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: data.dates,
+          datasets: [
+            {
+              label: data.label,
+              data: data.values,
+              borderColor: '#B8F04A',
+              backgroundColor: 'rgba(184, 240, 74, 0.12)',
+              borderWidth: 3,
+              tension: 0.35,
+              fill: true,
+              pointBackgroundColor: '#FFFFFF',
+              pointBorderColor: '#B8F04A',
+              pointBorderWidth: 2,
+              pointRadius: 5,
+              pointHoverRadius: 8
+            },
+            {
+              label: 'Limite de Referência',
+              data: Array(data.dates.length).fill(data.refMax),
+              borderColor: '#64748B',
+              borderDash: [5, 5],
+              borderWidth: 1.5,
+              pointRadius: 0,
+              fill: false
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'top',
+              labels: { 
+                boxWidth: 12, 
+                color: '#8DA39E',
+                font: { size: 11, family: 'Plus Jakarta Sans', weight: '500' } 
+              }
+            },
+            tooltip: {
+              backgroundColor: '#162529',
+              titleColor: '#FFFFFF',
+              bodyColor: '#B8F04A',
+              borderColor: '#1E3338',
+              borderWidth: 1,
+              padding: 10
+            }
+          },
+          scales: {
+            y: {
+              grid: { color: 'rgba(30, 51, 56, 0.6)' },
+              ticks: { color: '#8DA39E', font: { family: 'JetBrains Mono', size: 10 } }
+            },
+            x: {
+              grid: { display: false },
+              ticks: { color: '#8DA39E', font: { family: 'Plus Jakarta Sans', size: 11 } }
+            }
+          }
+        }
+      });
+    }
+
+    function updateChartData() { renderChart(); }
+    function selectBiomarker(key) {
+      const select = document.getElementById('biomarker-select');
+      if (select) { select.value = key; renderChart(); }
+    }
+
+    // Ingestão por Email
+    function simulateEmailArrival(type) {
+      const display = document.getElementById('ai-pipeline-display');
+      display.classList.remove('hidden');
+
+      const statusText = document.getElementById('pipeline-status-text');
+      const s1 = document.getElementById('step-1');
+      const s2 = document.getElementById('step-2');
+      const s3 = document.getElementById('step-3');
+      const s4 = document.getElementById('step-4');
+      const resBox = document.getElementById('ai-result-box');
+      const details = document.getElementById('ai-result-details');
+
+      resBox.classList.add('hidden');
+      statusText.innerText = "Recebendo email via Inbound Webhook...";
+      
+      s1.className = "p-3.5 rounded-xl border border-[#B8F04A] bg-[#14261F] text-white";
+      s2.className = "p-3.5 rounded-xl border border-[#1E3338] bg-[#162529] text-[#8DA39E]";
+      s3.className = "p-3.5 rounded-xl border border-[#1E3338] bg-[#162529] text-[#8DA39E]";
+      s4.className = "p-3.5 rounded-xl border border-[#1E3338] bg-[#162529] text-[#8DA39E]";
+
+      setTimeout(() => {
+        statusText.innerText = "Agente de IA: Classificando documento e identificando laboratório...";
+        s2.className = "p-3.5 rounded-xl border border-[#B8F04A] bg-[#14261F] text-white";
+      }, 700);
+
+      setTimeout(() => {
+        statusText.innerText = "Agente de IA: Extraindo parâmetros estruturados e normalizando LOINC...";
+        s3.className = "p-3.5 rounded-xl border border-[#B8F04A] bg-[#14261F] text-white";
+      }, 1500);
+
+      setTimeout(() => {
+        statusText.innerText = "Sucesso: Catalogado na pasta clínica do utente!";
+        s4.className = "p-3.5 rounded-xl border border-[#B8F04A] bg-[#14261F] text-white";
+        resBox.classList.remove('hidden');
+
+        if (type === 'unilabs') {
+          details.innerHTML = `
+            <p><span class="text-[#8DA39E]">Remetente Verificado:</span> resultados@unilabs.pt (Assinatura DKIM Válida)</p>
+            <p><span class="text-[#8DA39E]">Classificação IA:</span> Análises Laboratoriais / Bioquímica & Função Renal</p>
+            <p><span class="text-[#8DA39E]">Metadados:</span> Data: 08/11/2026 · Médica Requisitante: Dra. Marta Fernandes</p>
+            <p><span class="text-[#8DA39E]">Parâmetros LOINC:</span> Glicose: <strong class="text-[#B8F04A]">94 mg/dL</strong> [NORMAL] · Creatinina: <strong class="text-[#B8F04A]">0.98 mg/dL</strong> [NORMAL] · eGFR: <strong class="text-[#B8F04A]">82 mL/min</strong> [NORMAL]</p>
+          `;
+        } else {
+          details.innerHTML = `
+            <p><span class="text-[#8DA39E]">Remetente Verificado:</span> notificacoes@cuf.pt (Assinatura DKIM Válida)</p>
+            <p><span class="text-[#8DA39E]">Classificação IA:</span> Hematologia / Hemograma Completo</p>
+            <p><span class="text-[#8DA39E]">Metadados:</span> Data: 09/11/2026 · Unidade: Hospital CUF Porto</p>
+            <p><span class="text-[#8DA39E]">Parâmetros LOINC:</span> Hemoglobina: <strong class="text-[#B8F04A]">14.2 g/dL</strong> [NORMAL] · Leucócitos: <strong class="text-[#B8F04A]">6.8 x10^3/uL</strong> · Plaquetas: <strong class="text-[#B8F04A]">215 x10^3/uL</strong></p>
+          `;
+        }
+        lucide.createIcons();
+      }, 2300);
+    }
+
+    function approveAndAddToRecord() {
+      alert("✅ Exame e biomarcadores LOINC integrados no histórico!");
+      switchTab('dashboard');
+    }
+
+    function triggerOcrDemo() {
+      document.getElementById('ocr-demo-result').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function viewExamDetail(id) {
+      alert("Ficha do Exame #" + id + "\nDocumento original assinado disponível no cofre criptografado.\nHash SHA-256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\nNorma: HL7 FHIR DiagnosticReport");
+    }
+
+    // Traduções Multilíngues (Passaporte IPS)
+    const translations = {
+      en: {
+        title: "Foreign Healthcare Provider Clinical View",
+        audited: "Break-Glass Audited Session",
+        criticalTitle: "Critical Clinical Alerts",
+        medTitle: "Active Medications & ATC Codes",
+        recentTitle: "Recent Laboratory Findings (LOINC Normalized)",
+        thTest: "Test / Biomarker",
+        thValue: "Value",
+        thRef: "Ref. Range",
+        alerts: [
+          { title: "Severe Iodine Allergy", desc: "Contraindicated: Radiopaque contrast media for CT scans. [SNOMED CT: 293637006]" },
+          { title: "Cardiac Pacemaker Present", desc: "Implanted Sep 2022. MRI Restricted / Requires cardiology clearance. [SNOMED CT: 441509002]" }
+        ],
+        meds: [
+          { name: "Warfarin (Coumadin)", code: "ATC: B01AA03", dose: "5 mg once daily", note: "Anticoagulant — High bleeding risk in trauma/surgery." },
+          { name: "Metformin Hydrochloride", code: "ATC: A10BA02", dose: "850 mg twice daily", note: "Antidiabetic for Type 2 Diabetes Mellitus." }
+        ],
+        labs: [
+          { test: "Fasting Blood Glucose", loinc: "1558-6", val: "94 mg/dL", ref: "70 - 100", date: "04/11/2026" },
+          { test: "Serum Creatinine", loinc: "2160-0", val: "0.98 mg/dL", ref: "0.70 - 1.20", date: "04/11/2026" },
+          { test: "eGFR (CKD-EPI)", loinc: "62238-1", val: "82 mL/min", ref: "> 60", date: "04/11/2026" },
+          { test: "Total Cholesterol", loinc: "2093-3", val: "182 mg/dL", ref: "< 190", date: "18/06/2026" }
+        ]
+      },
+      es: {
+        title: "Vista Clínica para el Personal Médico en el Extranjero",
+        audited: "Sesión Auditada de Urgencia (Break-Glass)",
+        criticalTitle: "Alertas Clínicas Críticas",
+        medTitle: "Medicamentos Activos y Códigos ATC",
+        recentTitle: "Últimos Resultados de Laboratorio (Normalización LOINC)",
+        thTest: "Análisis / Biomarcador",
+        thValue: "Valor",
+        thRef: "Rango Ref.",
+        alerts: [
+          { title: "Alergia Grave al Yodo / Contrastes", desc: "Contraindicado: Medios de contraste yodados para TAC. [SNOMED CT: 293637006]" },
+          { title: "Marcapasos Cardíaco Implantado", desc: "Implantado Sep 2022. Resonancia Magnética restringida. [SNOMED CT: 441509002]" }
+        ],
+        meds: [
+          { name: "Warfarina", code: "ATC: B01AA03", dose: "5 mg una vez al día", note: "Anticoagulante — Riesgo elevado de hemorragia en trauma/cirugía." },
+          { name: "Metformina", code: "ATC: A10BA02", dose: "850 mg dos veces al día", note: "Antidiabético oral para Diabetes Tipo 2." }
+        ],
+        labs: [
+          { test: "Glucemia Basal en Ayunas", loinc: "1558-6", val: "94 mg/dL", ref: "70 - 100", date: "04/11/2026" },
+          { test: "Creatinina en Suero", loinc: "2160-0", val: "0.98 mg/dL", ref: "0.70 - 1.20", date: "04/11/2026" },
+          { test: "Filtrado Glomerular eGFR", loinc: "62238-1", val: "82 mL/min", ref: "> 60", date: "04/11/2026" },
+          { test: "Colesterol Total", loinc: "2093-3", val: "182 mg/dL", ref: "< 190", date: "18/06/2026" }
+        ]
+      },
+      fr: {
+        title: "Dossier Médical d'Urgence à l'Étranger",
+        audited: "Session d'Urgence Auditée (Break-Glass)",
+        criticalTitle: "Alertes Médicales Critiques",
+        medTitle: "Médicaments en Cours & Codes ATC",
+        recentTitle: "Derniers Examens Biologiques (Norme LOINC)",
+        thTest: "Paramètre / Examen",
+        thValue: "Valeur",
+        thRef: "Valeurs de Réf.",
+        alerts: [
+          { title: "Allergie Sévère à l'Iode", desc: "Contre-indication aux produits de contraste iodés. [SNOMED CT: 293637006]" },
+          { title: "Porteur d'un Stimulateur Cardiaque (Pacemaker)", desc: "Implanté en sept. 2022. IRM sous protocole strict. [SNOMED CT: 441509002]" }
+        ],
+        meds: [
+          { name: "Warfarine", code: "ATC: B01AA03", dose: "5 mg une fois par jour", note: "Anticoagulant — Risque hémorragique majeur en urgence." },
+          { name: "Metformine", code: "ATC: A10BA02", dose: "850 mg deux fois par jour", note: "Antidiabétique pour diabète de type 2." }
+        ],
+        labs: [
+          { test: "Glycémie à jeun", loinc: "1558-6", val: "94 mg/dL", ref: "70 - 100", date: "04/11/2026" },
+          { test: "Créatinine sérique", loinc: "2160-0", val: "0.98 mg/dL", ref: "0.70 - 1.20", date: "04/11/2026" },
+          { test: "Débit de Filtration Glomérulaire", loinc: "62238-1", val: "82 mL/min", ref: "> 60", date: "04/11/2026" },
+          { test: "Cholestérol Total", loinc: "2093-3", val: "182 mg/dL", ref: "< 190", date: "18/06/2026" }
+        ]
+      },
+      de: {
+        title: "Ärztliche Notfallansicht im Ausland",
+        audited: "Auditierter Notfallzugriff (Break-Glass)",
+        criticalTitle: "Kritische Klinische Warnhinweise",
+        medTitle: "Aktuelle Medikation & ATC-Codes",
+        recentTitle: "Aktuelle Laborwerte (LOINC-standardisiert)",
+        thTest: "Laborwert / Test",
+        thValue: "Messwert",
+        thRef: "Referenzbereich",
+        alerts: [
+          { title: "Schwere Jodallergie / Kontrastmittel", desc: "Kontraindiziert: Jodhaltige Röntgenkontrastmittel. [SNOMED CT: 293637006]" },
+          { title: "Herzschrittmacher implantiert", desc: "Implantation Sep 2022. MRT-Einschränkung beachten. [SNOMED CT: 441509002]" }
+        ],
+        meds: [
+          { name: "Warfarin", code: "ATC: B01AA03", dose: "5 mg täglich", note: "Antikoagulans — Hohes Blutungsrisiko bei Notoperationen." },
+          { name: "Metformin", code: "ATC: A10BA02", dose: "850 mg zweimal täglich", note: "Oraler Antidiabetiker bei Typ-2-Diabetes." }
+        ],
+        labs: [
+          { test: "Nüchternblutzucker (Glucose)", loinc: "1558-6", val: "94 mg/dL", ref: "70 - 100", date: "04/11/2026" },
+          { test: "Serum-Kreatinin", loinc: "2160-0", val: "0.98 mg/dL", ref: "0.70 - 1.20", date: "04/11/2026" },
+          { test: "Glomeruläre Filtrationsrate eGFR", loinc: "62238-1", val: "82 mL/min", ref: "> 60", date: "04/11/2026" },
+          { test: "Gesamtcholesterin", loinc: "2093-3", val: "182 mg/dL", ref: "< 190", date: "18/06/2026" }
+        ]
+      },
+      pt: {
+        title: "Visualização Médica de Emergência Internacional",
+        audited: "Sessão Auditada de Emergência (Break-Glass)",
+        criticalTitle: "Alertas Clínicos Críticos",
+        medTitle: "Medicação Ativa e Códigos ATC",
+        recentTitle: "Últimas Análises Clínicas (Normalização LOINC)",
+        thTest: "Parâmetro / Exame",
+        thValue: "Valor",
+        thRef: "Intervalo Ref.",
+        alerts: [
+          { title: "Alergia Grave a Iodo / Contraste", desc: "Contraindicado: Produtos de contraste iodados para TAC. [SNOMED CT: 293637006]" },
+          { title: "Pacemaker Cardíaco Implantado", desc: "Implantado em Set 2022. RMN restrita. [SNOMED CT: 441509002]" }
+        ],
+        meds: [
+          { name: "Varfarina", code: "ATC: B01AA03", dose: "5 mg uma vez por dia", note: "Anticoagulante — Risco hemorrágico elevado em cirurgia." },
+          { name: "Metformina", code: "ATC: A10BA02", dose: "850 mg duas vezes por dia", note: "Antidiabético para diabetes tipo 2." }
+        ],
+        labs: [
+          { test: "Glicose em Jejum", loinc: "1558-6", val: "94 mg/dL", ref: "70 - 100", date: "04/11/2026" },
+          { test: "Creatinina Sérica", loinc: "2160-0", val: "0.98 mg/dL", ref: "0.70 - 1.20", date: "04/11/2026" },
+          { test: "Taxa de Filtração Glomerular eGFR", loinc: "62238-1", val: "82 mL/min", ref: "> 60", date: "04/11/2026" },
+          { test: "Colesterol Total", loinc: "2093-3", val: "182 mg/dL", ref: "< 190", date: "18/06/2026" }
+        ]
+      }
+    };
+
+    function changeLanguage(lang) {
+      document.querySelectorAll('.lang-btn').forEach(btn => {
+        btn.className = "lang-btn px-2.5 py-1 rounded-xl bg-[#162529] hover:bg-[#1E3338] text-white text-xs font-medium transition";
+      });
+      const activeBtn = document.getElementById('lang-' + lang);
+      if (activeBtn) activeBtn.className = "lang-btn px-2.5 py-1 rounded-xl bg-[#B8F04A] text-[#0C1416] text-xs font-extrabold transition";
+
+      const t = translations[lang] || translations.en;
+      document.getElementById('abroad-portal-title').innerText = t.title;
+      document.getElementById('label-audited').innerText = t.audited;
+      document.getElementById('label-critical-alerts').innerText = t.criticalTitle;
+      document.getElementById('label-medications').innerText = t.medTitle;
+      document.getElementById('label-recent-labs').innerText = t.recentTitle;
+      document.getElementById('th-test').innerText = t.thTest;
+      document.getElementById('th-value').innerText = t.thValue;
+      document.getElementById('th-ref').innerText = t.thRef;
+
+      const alertsContainer = document.getElementById('critical-alerts-container');
+      alertsContainer.innerHTML = t.alerts.map(a => `
+        <div class="p-3.5 rounded-2xl bg-[#2A1416] border border-red-500/30">
+          <p class="font-bold text-red-200 text-xs">${a.title}</p>
+          <p class="text-[11px] text-red-300 mt-0.5 leading-relaxed">${a.desc}</p>
+        </div>
+      `).join('');
+
+      const medsContainer = document.getElementById('medications-container');
+      medsContainer.innerHTML = t.meds.map(m => `
+        <div class="flex items-center justify-between text-xs pb-2.5 border-b border-[#1E3338] last:border-0 last:pb-0">
+          <div>
+            <span class="font-bold text-white">${m.name}</span>
+            <span class="text-[#8DA39E] ml-1.5">(${m.dose})</span>
+            <span class="block text-[10px] text-amber-300 font-medium mt-0.5">${m.note}</span>
+          </div>
+          <code class="font-mono text-[10px] px-2.5 py-1 rounded-lg bg-[#162529] text-[#5EEAD4] font-bold border border-[#1E3338]">${m.code}</code>
+        </div>
+      `).join('');
+
+      const labsTable = document.getElementById('abroad-labs-table');
+      labsTable.innerHTML = t.labs.map(l => `
+        <tr class="hover:bg-[#162529] transition">
+          <td class="py-2.5 px-4 text-white font-semibold">${l.test}</td>
+          <td class="py-2.5 px-4 text-[#8DA39E]">${l.loinc}</td>
+          <td class="py-2.5 px-4 text-[#B8F04A] font-bold">${l.val}</td>
+          <td class="py-2.5 px-4 text-[#8DA39E]">${l.ref}</td>
+          <td class="py-2.5 px-4 text-[#8DA39E]">${l.date}</td>
+        </tr>
+      `).join('');
+    }
+
+    // ============================================================
+    // HISTÓRICO AVANÇADO, EDIÇÃO DE CATEGORIA, OCR/CÂMARA, MEDIÇÕES, EVENTOS & APRENDER
+    // ============================================================
+    const CATEGORY_LABELS = {
+      blood_tests: 'Análises ao sangue',
+      blood: 'Análises ao sangue',
+      urine: 'Urina',
+      imaging: 'Imagiologia',
+      cardiology: 'Cardiologia',
+      vaccines: 'Vacinas',
+      prescriptions: 'Receitas',
+      clinical_reports: 'Relatórios clínicos',
+      other: 'Outro'
+    };
+
+    function applyThemeAndExperience(theme, mode) {
+      const html = document.documentElement;
+      if (theme === 'light') {
+        html.classList.remove('dark');
+        html.classList.add('light');
+        const lbl = document.getElementById('theme-label');
+        if (lbl) lbl.innerText = 'Claro';
+      } else {
+        html.classList.remove('light');
+        html.classList.add('dark');
+        const lbl = document.getElementById('theme-label');
+        if (lbl) lbl.innerText = 'Escuro';
+      }
+      document.body.classList.remove('mode-simple', 'mode-balanced', 'mode-detailed');
+      document.body.classList.add('mode-' + (mode || 'balanced'));
+      const sel = document.getElementById('experience-mode-select');
+      if (sel) sel.value = mode || 'balanced';
+    }
+
+    async function toggleTheme() {
+      const isLight = document.documentElement.classList.contains('light');
+      const nextTheme = isLight ? 'dark' : 'light';
+      const currentMode = document.getElementById('experience-mode-select')?.value || 'balanced';
+      applyThemeAndExperience(nextTheme, currentMode);
+      if (window.PulsoAPI && currentAuthState.role === 'patient') {
+        try { await window.PulsoAPI.updatePreferences({ theme: nextTheme }); } catch (e) {}
+      }
+    }
+
+    async function changeExperienceMode(mode) {
+      const isLight = document.documentElement.classList.contains('light');
+      applyThemeAndExperience(isLight ? 'light' : 'dark', mode);
+      if (window.PulsoAPI && currentAuthState.role === 'patient') {
+        try { await window.PulsoAPI.updatePreferences({ mode }); } catch (e) {}
+      }
+    }
+
+    function periodCutoffDate(period) {
+      if (!period || period === 'all') return null;
+      const now = new Date();
+      const map = { '1w': 7, '1m': 30, '3m': 90, '6m': 180, '1y': 365, '2y': 730, '5y': 1825, '10y': 3650 };
+      const days = map[period];
+      if (!days) return null;
+      return new Date(now.getTime() - days * 86400000);
+    }
+
+    function renderHistoryList() {
+      const container = document.getElementById('exam-history-list');
+      if (!container) return;
+      const exams = liveRecordsState.exams || [];
+      const q = (document.getElementById('history-search-input')?.value || '').trim().toLowerCase();
+      const cat = document.getElementById('history-category-filter')?.value || 'all';
+      const period = document.getElementById('history-period-filter')?.value || 'all';
+      const cutoff = periodCutoffDate(period);
+      const isDoctor = currentAuthState.role === 'doctor';
+
+      const filtered = exams.filter(ex => {
+        if (cat !== 'all' && ex.category !== cat) return false;
+        if (cutoff && ex.examDate) {
+          const d = new Date(ex.examDate);
+          if (!isNaN(d.getTime()) && d < cutoff) return false;
+        }
+        if (q) {
+          const hay = `${ex.title} ${ex.institution} ${ex.notes || ''} ${(ex.biomarkers || []).map(b => b.name).join(' ')}`.toLowerCase();
+          if (!hay.includes(q)) return false;
+        }
+        return true;
+      });
+
+      const badge = document.getElementById('exam-count-badge');
+      if (badge) badge.innerText = `${filtered.length} Exame${filtered.length === 1 ? '' : 's'} Registado${filtered.length === 1 ? '' : 's'}`;
+
+      if (!filtered.length) {
+        container.innerHTML = `<div class="p-6 text-center text-xs text-[#8DA39E]">Nenhum exame encontrado para os filtros selecionados.</div>`;
+        return;
+      }
+
+      container.innerHTML = filtered.map(ex => {
+        const isSns = (ex.source || 'SNS').toUpperCase() === 'SNS';
+        const srcBadge = isSns
+          ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#14332D] text-[#5EEAD4] border border-[#5EEAD4]/30">SNS</span>`
+          : `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#1E293B] text-[#94A3B8] border border-slate-600">Privado</span>`;
+        const catLabel = CATEGORY_LABELS[ex.category] || ex.category;
+        const bioSummary = (ex.biomarkers || []).slice(0, 3).map(b => `${b.name}: ${b.value} ${b.unit || ''}`).join(' · ') || ex.notes || 'Documento clínico';
+        const deleteBtn = !isDoctor
+          ? `<button type="button" onclick="event.stopPropagation(); deleteExamRecord('${ex.id}')" class="px-2 py-1 rounded-lg bg-[#2A1416] hover:bg-red-900/60 text-red-200 text-[10px] font-bold" title="Apagar exame (Soberania do Utente)">Apagar</button>`
+          : '';
+        return `
+          <div class="p-4 sm:px-6 hover:bg-[#162529]/60 transition flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div class="flex items-center space-x-4 cursor-pointer" onclick="alert('Exame: ${ex.title.replace(/'/g, '')}\\nInstituição: ${(ex.institution || '').replace(/'/g, '')}\\nData: ${ex.examDate}\\nBiomarcadores: ${bioSummary.replace(/'/g, '')}')">
+              <div class="w-10 h-10 rounded-2xl bg-[#14332D] text-[#5EEAD4] flex items-center justify-center border border-[#5EEAD4]/20 shrink-0">
+                <i data-lucide="file-check" class="w-5 h-5 text-[#B8F04A]"></i>
+              </div>
+              <div>
+                <div class="flex flex-wrap items-center gap-2">
+                  <h4 class="text-sm font-bold text-white">${ex.title}</h4>
+                  ${srcBadge}
+                  <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#0C1416] text-[#8DA39E] border border-[#1E3338]">${catLabel}</span>
+                </div>
+                <p class="text-xs text-[#8DA39E] mt-0.5">${ex.examDate} · ${ex.institution || 'Instituição de Saúde'} · ${bioSummary}</p>
+              </div>
+            </div>
+            <div class="flex items-center space-x-2">
+              <button type="button" onclick="openEditExamModal('${ex.id}')" class="px-2.5 py-1 rounded-lg bg-[#162529] hover:bg-[#1E3338] text-[#5EEAD4] border border-[#1E3338] text-[10px] font-bold">Editar Categoria</button>
+              ${deleteBtn}
+            </div>
+          </div>`;
+      }).join('');
+      lucide.createIcons();
+    }
+
+    function openEditExamModal(examId) {
+      const ex = (liveRecordsState.exams || []).find(e => e.id === examId);
+      if (!ex) return;
+      document.getElementById('edit-exam-id').value = ex.id;
+      document.getElementById('edit-exam-title').value = ex.title;
+      document.getElementById('edit-exam-category').value = ex.category || 'blood';
+      document.getElementById('edit-exam-source').value = ex.source || 'SNS';
+      document.getElementById('edit-exam-modal').classList.remove('hidden');
+    }
+
+    async function saveExamClassificationEdit() {
+      const id = document.getElementById('edit-exam-id').value;
+      const title = document.getElementById('edit-exam-title').value.trim();
+      const category = document.getElementById('edit-exam-category').value;
+      const source = document.getElementById('edit-exam-source').value;
+      try {
+        await window.PulsoAPI.updateExam(id, { title, category, source });
+        document.getElementById('edit-exam-modal').classList.add('hidden');
+        await refreshClinicalWorkspace();
+      } catch (err) {
+        alert(err.message || 'Erro ao atualizar exame.');
+      }
+    }
+
+    async function deleteExamRecord(examId) {
+      if (!confirm('Tem a certeza que deseja eliminar este exame da sua carteira?')) return;
+      try {
+        await window.PulsoAPI.deleteExam(examId);
+        await refreshClinicalWorkspace();
+      } catch (err) {
+        alert(err.message || 'Não autorizado.');
+      }
+    }
+
+    async function handleRealFileUpload(file) {
+      if (!file) return;
+      const loading = document.getElementById('ocr-loading-box');
+      const resultBox = document.getElementById('ocr-demo-result');
+      loading.classList.remove('hidden');
+      resultBox.classList.add('hidden');
+      try {
+        const data = await window.PulsoAPI.runExtraction(file);
+        const ext = data.extraction || data;
+        pendingExtraction = { ...ext, fileBase64: data.fileBase64, fileName: data.fileName, mimeType: data.mimeType };
+        document.getElementById('ocr-filename-label').innerText = data.fileName || file.name;
+        document.getElementById('ocr-engine-badge').innerText = `Extração (${ext.engine || 'PyMuPDF'}) · Revisão Humana`;
+        document.getElementById('review-exam-title').value = ext.title || 'Análises Clínicas';
+        document.getElementById('review-exam-category').value = ext.category || 'blood_tests';
+        document.getElementById('review-exam-lab').value = ext.issuer || ext.institution || 'Laboratório Clínico';
+        document.getElementById('review-exam-date').value = ext.examDate || new Date().toISOString().slice(0, 10);
+
+        const bios = ext.extractedValues || ext.biomarkers || [];
+        document.getElementById('review-biomarkers-list').innerHTML = bios.length
+          ? bios.map(b => `<div class="text-white">» ${b.name || b.parameter}: <span class="text-[#B8F04A] font-bold">${b.value} ${b.unit || ''}</span> <span class="text-[#8DA39E]">(${b.referenceRange || b.ref || 'Ref. padrão'})</span></div>`).join('')
+          : `<div class="text-[#8DA39E]">Texto extraído (${(ext.rawText || '').length} caracteres). Pode rever e guardar.</div>`;
+        resultBox.classList.remove('hidden');
+      } catch (err) {
+        alert(err.message || 'Erro ao extrair documento.');
+      } finally {
+        loading.classList.add('hidden');
+      }
+    }
+
+    async function runDemoPdfExtraction() {
+      try {
+        const blob = await window.PulsoAPI.getSamplePdfBlob();
+        const file = new File([blob], 'laboratorio-demo.pdf', { type: 'application/pdf' });
+        await handleRealFileUpload(file);
+      } catch (err) {
+        alert(err.message || 'Erro ao carregar PDF de demonstração.');
+      }
+    }
+
+    async function toggleWebCamera() {
+      const container = document.getElementById('webcam-container');
+      if (!container.classList.contains('hidden')) {
+        stopWebCamera();
+        return;
+      }
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        alert('A câmara web não está disponível neste navegador.');
+        return;
+      }
+      try {
+        activeWebcamStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        const video = document.getElementById('webcam-video');
+        video.srcObject = activeWebcamStream;
+        container.classList.remove('hidden');
+      } catch (err) {
+        alert('Não foi possível aceder à câmara: ' + err.message);
+      }
+    }
+
+    function stopWebCamera() {
+      if (activeWebcamStream) {
+        activeWebcamStream.getTracks().forEach(t => t.stop());
+        activeWebcamStream = null;
+      }
+      document.getElementById('webcam-container').classList.add('hidden');
+    }
+
+    function captureWebCameraPhoto() {
+      const video = document.getElementById('webcam-video');
+      const canvas = document.getElementById('webcam-canvas');
+      canvas.width = video.videoWidth || 1280;
+      canvas.height = video.videoHeight || 720;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      stopWebCamera();
+      canvas.toBlob(async (blob) => {
+        if (!blob) return;
+        const file = new File([blob], 'captura_camara.png', { type: 'image/png' });
+        await handleRealFileUpload(file);
+      }, 'image/png');
+    }
+
+    async function saveReviewedExam() {
+      const payload = {
+        title: document.getElementById('review-exam-title').value.trim() || 'Exame Clínico',
+        category: document.getElementById('review-exam-category').value,
+        issuer: document.getElementById('review-exam-lab').value.trim() || 'Clínica',
+        examDate: document.getElementById('review-exam-date').value || new Date().toISOString().slice(0, 10),
+        summary: pendingExtraction?.summary || pendingExtraction?.rawText?.slice(0, 160) || '',
+        extractedValues: pendingExtraction?.extractedValues || pendingExtraction?.biomarkers || []
+      };
+      try {
+        await window.PulsoAPI.createExam(payload);
+        document.getElementById('ocr-demo-result').classList.add('hidden');
+        await refreshClinicalWorkspace();
+        switchTab('dashboard');
+      } catch (err) {
+        alert(err.message || 'Erro ao guardar exame.');
+      }
+    }
+
+    function toggleMeasurementFields() {
+      const kind = document.getElementById('meas-kind').value;
+      document.getElementById('meas-bp-fields').classList.toggle('hidden', kind !== 'pressure');
+      document.getElementById('meas-spo2-fields').classList.toggle('hidden', kind !== 'spo2');
+    }
+
+    async function submitMeasurement() {
+      const kind = document.getElementById('meas-kind').value;
+      const notes = document.getElementById('meas-notes').value.trim();
+      const payload = { kind, notes, measuredAt: new Date().toISOString().slice(0, 16) };
+      if (kind === 'pressure') {
+        payload.systolic = Number(document.getElementById('meas-sys').value);
+        payload.diastolic = Number(document.getElementById('meas-dia').value);
+        payload.heartRate = Number(document.getElementById('meas-hr').value);
+      } else {
+        payload.spo2 = Number(document.getElementById('meas-spo2').value);
+      }
+      try {
+        await window.PulsoAPI.createMeasurement(payload);
+        document.getElementById('meas-notes').value = '';
+        await refreshClinicalWorkspace();
+      } catch (err) {
+        alert(err.message || 'Erro ao registar medição.');
+      }
+    }
+
+    async function submitClinicalEvent() {
+      const title = document.getElementById('ev-title').value.trim();
+      if (!title) { alert('Indique o título do evento.'); return; }
+      const payload = {
+        title,
+        eventType: document.getElementById('ev-type').value,
+        startDate: document.getElementById('ev-date').value || new Date().toISOString().slice(0, 10),
+        notes: document.getElementById('ev-notes').value.trim()
+      };
+      try {
+        await window.PulsoAPI.createEvent(payload);
+        document.getElementById('ev-title').value = '';
+        document.getElementById('ev-notes').value = '';
+        await refreshClinicalWorkspace();
+      } catch (err) {
+        alert(err.message || 'Erro ao registar evento.');
+      }
+    }
+
+    function renderMeasurementsAndEvents() {
+      const mList = document.getElementById('measurements-list');
+      const eList = document.getElementById('events-list');
+      const isDoctor = currentAuthState.role === 'doctor';
+      if (mList) {
+        const items = liveRecordsState.measurements || [];
+        mList.innerHTML = items.length ? items.map(m => {
+          const valStr = m.kind === 'blood_pressure'
+            ? `${m.systolic}/${m.diastolic} mmHg · FC ${m.heartRate || '-'} bpm`
+            : `SpO₂ ${m.spo2 || m.value}%`;
+          const del = !isDoctor ? `<button onclick="window.PulsoAPI.deleteMeasurement('${m.id}').then(refreshClinicalWorkspace)" class="text-red-300 hover:text-red-100 text-[10px]">Apagar</button>` : '';
+          return `<div class="p-3 rounded-xl bg-[#0C1416] border border-[#1E3338] flex justify-between items-center">
+            <div><p class="font-bold text-white">${valStr}</p><p class="text-[10px] text-[#8DA39E]">${m.measuredAt} ${m.notes ? '· ' + m.notes : ''}</p></div>
+            ${del}
+          </div>`;
+        }).join('') : `<p class="text-[#8DA39E]">Sem medições registadas.</p>`;
+      }
+      if (eList) {
+        const items = liveRecordsState.events || [];
+        eList.innerHTML = items.length ? items.map(ev => {
+          const del = !isDoctor ? `<button onclick="window.PulsoAPI.deleteEvent('${ev.id}').then(refreshClinicalWorkspace)" class="text-red-300 hover:text-red-100 text-[10px]">Apagar</button>` : '';
+          return `<div class="p-3 rounded-xl bg-[#0C1416] border border-[#1E3338] flex justify-between items-center">
+            <div><p class="font-bold text-white">${ev.title} <span class="text-[10px] text-[#5EEAD4]">[${ev.eventType}]</span></p><p class="text-[10px] text-[#8DA39E]">${ev.startDate} ${ev.notes ? '· ' + ev.notes : ''}</p></div>
+            ${del}
+          </div>`;
+        }).join('') : `<p class="text-[#8DA39E]">Sem eventos clínicos registados.</p>`;
+      }
+    }
+
+    function renderLearningCards() {
+      const pillsEl = document.getElementById('learning-category-pills');
+      const gridEl = document.getElementById('learning-cards-grid');
+      if (!pillsEl || !gridEl) return;
+      const topics = catalogsState.learningTopics || [];
+      const cats = Array.from(new Set(topics.map(t => t.categoryLabel || t.category)));
+      pillsEl.innerHTML = ['all', ...cats].map(c => `
+        <button type="button" onclick="selectedLearningCategory='${c}'; renderLearningCards()" class="px-3 py-1 rounded-full text-xs font-bold border transition ${selectedLearningCategory === c ? 'bg-[#B8F04A] text-[#0C1416] border-[#B8F04A]' : 'bg-[#0C1416] text-[#8DA39E] border-[#1E3338] hover:text-white'}">
+          ${c === 'all' ? 'Todas (23)' : c}
+        </button>`).join('');
+
+      const q = (document.getElementById('learning-search-input')?.value || '').trim().toLowerCase();
+      const filtered = topics.filter(t => {
+        const cat = t.categoryLabel || t.category;
+        if (selectedLearningCategory !== 'all' && cat !== selectedLearningCategory) return false;
+        if (q && !`${t.title} ${t.summary} ${t.whyItMatters || ''}`.toLowerCase().includes(q)) return false;
+        return true;
+      });
+      gridEl.innerHTML = filtered.map(t => `
+        <div onclick="openLearningModal('${t.id}')" class="p-4 rounded-2xl bg-[#0C1416] border border-[#1E3338] hover:border-[#B8F04A]/50 transition cursor-pointer space-y-2">
+          <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#14332D] text-[#5EEAD4]">${t.categoryLabel || t.category}</span>
+          <h4 class="text-sm font-bold text-white">${t.title}</h4>
+          <p class="text-xs text-[#8DA39E] line-clamp-3">${t.summary}</p>
+        </div>`).join('');
+    }
+
+    function openLearningModal(topicId) {
+      const t = (catalogsState.learningTopics || []).find(x => x.id === topicId);
+      if (!t) return;
+      document.getElementById('ldm-cat').innerText = t.categoryLabel || t.category;
+      document.getElementById('ldm-title').innerText = t.title;
+      document.getElementById('ldm-summary').innerText = t.summary;
+      document.getElementById('ldm-why').innerText = t.whyItMatters ? '💡 Por que importa: ' + t.whyItMatters : '';
+      document.getElementById('learning-detail-modal').classList.remove('hidden');
+    }
+
+    function openLearningForBiomarker() {
+      const key = document.getElementById('biomarker-select')?.value || 'glucose';
+      const map = { glucose: 'glicose', creatinine: 'creatinina', cholesterol: 'colesterol', hba1c: 'hba1c' };
+      const term = map[key] || key;
+      const found = (catalogsState.learningTopics || []).find(t => (t.title + ' ' + t.id).toLowerCase().includes(term));
+      if (found) openLearningModal(found.id);
+      else switchTab('learning');
+    }
+
+    // Inicialização ao carregar
+    window.addEventListener('DOMContentLoaded', async () => {
+      updateDetectedMobileCode();
+      changeLanguage('en');
+      if (window.PulsoAPI && window.PulsoAPI.getToken()) {
+        try {
+          const session = await window.PulsoAPI.me();
+          if (session && session.authenticated) {
+            await enterAuthenticatedWorkspace(session);
+          }
+        } catch (e) {}
+      }
+    });
+  </script>
+</body>
+</html>

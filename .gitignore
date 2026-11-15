@@ -1,0 +1,14 @@
+# Excluir pastas de backup, fotos, ambientes virtuais e base de dados local
+Backup/
+Fotos/
+.venv/
+.local/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+*.sqlite3
+*.db
+.env
+.DS_Store
+Thumbs.db
