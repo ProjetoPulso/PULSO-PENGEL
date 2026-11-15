@@ -10,6 +10,11 @@
     else sessionStorage.removeItem(SESSION_KEY);
   }
 
+  const API_BASE =
+    window.location.protocol === "file:" || (window.location.port && window.location.port !== "8000")
+      ? "http://127.0.0.1:8000"
+      : "";
+
   async function apiFetch(path, opts = {}) {
     const headers = Object.assign({}, opts.headers || {});
     const token = getToken();
@@ -17,15 +22,20 @@
     if (opts.body && !(opts.body instanceof FormData) && !headers["Content-Type"]) {
       headers["Content-Type"] = "application/json";
     }
-    const res = await fetch(path, { ...opts, headers, credentials: "include" });
+    const res = await fetch(API_BASE + path, { ...opts, headers, credentials: "include" });
     if (!res.ok) {
       let msg = "Erro de comunicação com o servidor PULSO.";
+      let hasDetail = false;
       try {
         const err = await res.json();
-        if (err && err.detail) msg = err.detail;
+        if (err && err.detail) {
+          msg = err.detail;
+          hasDetail = true;
+        }
       } catch (_) {}
       const error = new Error(msg);
       error.status = res.status;
+      error.isNoBackend = !hasDetail && (res.status === 404 || res.status === 405 || res.status >= 500);
       throw error;
     }
     const ct = res.headers.get("content-type") || "";
