@@ -41,7 +41,7 @@
             "Pacemaker Cardíaco (Implantado 2022)",
             "Varfarina 5mg (Anticoagulante - Risco Hemorragia)"
           ],
-          preferences: { theme: "dark", mode: "balanced", textSize: "standard", contrast: "standard", reducedMotion: false },
+          preferences: { theme: "dark", mode: "balanced", textSize: "standard", contrast: "high", reducedMotion: false },
           exams: [
             { id: "ex-1", title: "Análises ao sangue", category: "blood_tests", source: "SNS", institution: "USF São João", issuer: "USF São João", examDate: "2026-11-04", intakeChannel: "Email IA", sha256: "8f3c2e19a4b7d012", biomarkers: [{ name: "Glicose", value: 94, unit: "mg/dL" }, { name: "Creatinina", value: 0.98, unit: "mg/dL" }, { name: "eGFR", value: 82, unit: "mL/min" }] },
             { id: "ex-2", title: "Hemograma Completo", category: "blood_tests", source: "Privado", institution: "Unilabs Portugal", issuer: "Unilabs Portugal", examDate: "2026-10-10", intakeChannel: "Foto OCR", sha256: "4a1d9b72c3f8091a", biomarkers: [{ name: "Hemoglobina", value: 14.2, unit: "g/dL" }, { name: "Leucócitos", value: 6.8, unit: "x10³/µL" }, { name: "Plaquetas", value: 215, unit: "x10³/µL" }] },
@@ -176,7 +176,7 @@
             email: data.email || `${sns}@inbox.pulso.health`,
             password: data.password,
             clinicalAlerts: [],
-            preferences: { theme: "dark", mode: "balanced", textSize: "standard", contrast: "standard", reducedMotion: false },
+            preferences: { theme: "dark", mode: "balanced", textSize: "standard", contrast: "high", reducedMotion: false },
             exams: [],
             measurements: [],
             events: [],

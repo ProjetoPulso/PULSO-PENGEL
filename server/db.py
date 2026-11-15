@@ -151,6 +151,8 @@ def seed_demo_data():
             "theme": "dark",
             "mode": "balanced",
             "textSize": "standard",
+            "contrast": "high",
+            "reducedMotion": False,
         }
 
         db.execute(

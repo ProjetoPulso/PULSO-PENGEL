@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt" class="dark">
+<html lang="pt" class="dark high-contrast">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -1367,7 +1367,7 @@
                   <span class="text-xs font-bold text-white block">Alto Contraste</span>
                   <span class="text-[11px] text-[#8DA39E]">Reforça contornos e contraste para baixa visão.</span>
                 </div>
-                <input type="checkbox" id="cfg-contrast-toggle" onchange="toggleHighContrast(this.checked)" class="w-4 h-4 accent-[#B8F04A]">
+                <input type="checkbox" id="cfg-contrast-toggle" checked onchange="toggleHighContrast(this.checked)" class="w-4 h-4 accent-[#B8F04A]">
               </label>
 
               <label class="flex items-center justify-between p-3 rounded-2xl bg-[#0C1416] border border-[#1E3338] cursor-pointer">
@@ -1675,7 +1675,7 @@
           p.preferences.theme || 'dark',
           p.preferences.mode || 'balanced',
           p.preferences.textSize || 'standard',
-          p.preferences.contrast || 'standard',
+          p.preferences.contrast || 'high',
           Boolean(p.preferences.reducedMotion)
         );
       }
@@ -2235,7 +2235,7 @@
       other: 'Outro'
     };
 
-    let currentPreferences = { theme: 'dark', mode: 'balanced', textSize: 'standard', contrast: 'standard', reducedMotion: false };
+    let currentPreferences = { theme: 'dark', mode: 'balanced', textSize: 'standard', contrast: 'high', reducedMotion: false };
 
     function applyThemeAndExperience(theme, mode, textSize, contrast, reducedMotion) {
       if (theme !== undefined) currentPreferences.theme = theme;

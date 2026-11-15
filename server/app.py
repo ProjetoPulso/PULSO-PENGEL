@@ -271,7 +271,7 @@ def register_patient(body: RegisterPatientReq, response: Response):
     inbox_slug = re.sub(r"[^a-z0-9]+", ".", name.lower()).strip(".") or sns
     email = (body.email or "").strip() or f"{inbox_slug}@inbox.pulso.health"
     now = time.time()
-    prefs = {"theme": "dark", "mode": "balanced", "textSize": "standard"}
+    prefs = {"theme": "dark", "mode": "balanced", "textSize": "standard", "contrast": "high", "reducedMotion": False}
 
     with get_db(write=True) as db:
         existing = db.execute("SELECT id FROM users WHERE sns_number = ?", (sns,)).fetchone()
