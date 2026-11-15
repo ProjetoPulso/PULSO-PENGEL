@@ -69,6 +69,8 @@
       }),
     updatePreferences: (prefs) =>
       apiFetch("/api/auth/preferences", { method: "PATCH", body: JSON.stringify(prefs) }),
+    updateProfile: (profile) =>
+      apiFetch("/api/auth/profile", { method: "PATCH", body: JSON.stringify(profile) }),
     createShareCode: (durationKey) =>
       apiFetch("/api/share-codes", { method: "POST", body: JSON.stringify({ durationKey }) }),
     getActiveShareCode: () => apiFetch("/api/share-codes/active"),

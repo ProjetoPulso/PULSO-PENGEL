@@ -188,7 +188,17 @@ class CreateShareCodeReq(BaseModel):
 class PreferencesReq(BaseModel):
     theme: Optional[Literal["dark", "light"]] = None
     mode: Optional[Literal["simple", "balanced", "detailed"]] = None
-    textSize: Optional[Literal["standard", "large"]] = None
+    textSize: Optional[Literal["standard", "large", "xlarge"]] = None
+    contrast: Optional[Literal["standard", "high"]] = None
+    reducedMotion: Optional[bool] = None
+
+
+class ProfileUpdateReq(BaseModel):
+    fullName: Optional[str] = None
+    birthDate: Optional[str] = None
+    email: Optional[str] = None
+    clinicalAlerts: Optional[list[str]] = None
+    password: Optional[str] = None
 
 
 class ExamCreateReq(BaseModel):
@@ -424,9 +434,63 @@ def update_preferences(body: PreferencesReq, request: Request):
         prefs["mode"] = body.mode
     if body.textSize is not None:
         prefs["textSize"] = body.textSize
+    if body.contrast is not None:
+        prefs["contrast"] = body.contrast
+    if body.reducedMotion is not None:
+        prefs["reducedMotion"] = body.reducedMotion
     with get_db(write=True) as db:
         db.execute("UPDATE users SET preferences = ? WHERE id = ?", (json.dumps(prefs), sess["user_id"]))
     return {"ok": True, "preferences": prefs}
+
+
+@app.patch("/api/auth/profile")
+def update_profile(body: ProfileUpdateReq, request: Request):
+    sess = _get_session(request)
+    is_patient = sess["role"] == "patient"
+    updates = []
+    params: list[Any] = []
+
+    if body.fullName is not None:
+        name = body.fullName.strip()
+        if len(name) < 2:
+            raise HTTPException(422, "O nome completo deve ter pelo menos 2 caracteres.")
+        updates.extend(["full_name = ?", "display_name = ?"])
+        params.extend([name, name])
+
+    if body.email is not None:
+        updates.append("email = ?")
+        params.append(body.email.strip())
+
+    if body.birthDate is not None:
+        if not is_patient:
+            raise HTTPException(403, "Apenas o utente pode alterar a sua data de nascimento.")
+        if body.birthDate and not re.fullmatch(r"\d{4}-\d{2}-\d{2}", body.birthDate):
+            raise HTTPException(422, "Data de nascimento inválida (usa AAAA-MM-DD).")
+        updates.append("birth_date = ?")
+        params.append(body.birthDate)
+
+    if body.clinicalAlerts is not None:
+        if not is_patient:
+            raise HTTPException(403, "Apenas o utente pode editar os seus alertas clínicos.")
+        cleaned_alerts = [a.strip() for a in body.clinicalAlerts if a and a.strip()]
+        updates.append("clinical_alerts = ?")
+        params.append(json.dumps(cleaned_alerts, ensure_ascii=False))
+
+    if body.password is not None and body.password != "":
+        if len(body.password) < 6:
+            raise HTTPException(422, "A nova palavra-passe deve ter pelo menos 6 caracteres.")
+        updates.append("password_hash = ?")
+        params.append(HASHER.hash(body.password))
+
+    if not updates:
+        return {"ok": True, "user": sess["user"]}
+
+    params.append(sess["user_id"])
+    with get_db(write=True) as db:
+        db.execute(f"UPDATE users SET {', '.join(updates)} WHERE id = ?", tuple(params))
+        if sess["patient_id"]:
+            _record_audit(db, sess["patient_id"], sess["role"], sess["user"]["displayName"], "PROFILE_UPDATED", "Dados do perfil atualizados.")
+    return {"ok": True}
 
 
 # ---------------------------------------------------------------------------

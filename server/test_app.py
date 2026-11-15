@@ -164,3 +164,19 @@ def test_pdf_extraction_exam_crud_and_events():
         assert ev.status_code == 200
         ev_id = ev.json()["id"]
         assert client.delete(f"/api/events/{ev_id}").status_code == 200
+
+        # Update patient profile & accessibility preferences
+        prof = client.patch("/api/auth/profile", json={
+            "fullName": "Sr. António Silva Atualizado",
+            "clinicalAlerts": ["Alergia Grave a Iodo", "Pacemaker"]
+        })
+        assert prof.status_code == 200
+        pref = client.patch("/api/auth/preferences", json={
+            "mode": "simple",
+            "textSize": "xlarge",
+            "contrast": "high",
+            "reducedMotion": True
+        })
+        assert pref.status_code == 200
+        assert pref.json()["preferences"]["textSize"] == "xlarge"
+        assert pref.json()["preferences"]["mode"] == "simple"

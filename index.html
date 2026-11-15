@@ -100,12 +100,27 @@
     html.light .text-\[\#B8F04A\] {
       color: #15803D !important;
     }
-    /* Modo Experiência Simples */
-    body.mode-simple .detail-only {
+    /* Modos de Experiência (Simples / Equilibrado / Detalhado) */
+    body.mode-simple .detail-only,
+    body.mode-simple .detailed-only {
       display: none !important;
+    }
+    body.mode-simple #dashboard-chart-col {
+      grid-column: span 3 / span 3 !important;
     }
     body.mode-balanced .detailed-only {
       display: none !important;
+    }
+    /* Acessibilidade: Alto Contraste & Redução de Animações */
+    html.high-contrast body {
+      filter: contrast(1.18);
+    }
+    html.high-contrast .border-\[\#1E3338\] {
+      border-color: #5EEAD4 !important;
+    }
+    html.reduced-motion *, html.reduced-motion *::before, html.reduced-motion *::after {
+      animation: none !important;
+      transition: none !important;
     }
   </style>
 </head>
@@ -131,17 +146,17 @@
       <!-- Informação da Médica/Paciente & Estado do Acesso -->
       <div class="flex items-center space-x-3">
         
-        <!-- Controlo de Experiência & Tema -->
-        <div class="hidden lg:flex items-center space-x-1.5 bg-[#131F22] border border-[#1E3338] rounded-full px-2 py-1">
-          <select id="experience-mode-select" onchange="changeExperienceMode(this.value)" class="bg-transparent text-[11px] font-semibold text-[#8DA39E] focus:outline-none cursor-pointer" title="Nível de detalhe">
+        <!-- Controlo de Experiência & Tema (sempre visível) -->
+        <div class="flex items-center space-x-1.5 bg-[#131F22] border border-[#1E3338] rounded-full px-2.5 py-1">
+          <select id="experience-mode-select" onchange="changeExperienceMode(this.value)" class="bg-transparent text-[11px] font-bold text-[#B8F04A] focus:outline-none cursor-pointer" title="Nível de detalhe da interface">
             <option value="simple" class="bg-[#131F22] text-white">Simples</option>
             <option value="balanced" selected class="bg-[#131F22] text-white">Equilibrado</option>
             <option value="detailed" class="bg-[#131F22] text-white">Detalhado</option>
           </select>
           <span class="text-[#1E3338]">|</span>
-          <button onclick="toggleTheme()" id="theme-toggle-btn" class="text-[11px] text-[#B8F04A] hover:text-white px-1.5 py-0.5 rounded-full transition flex items-center space-x-1" title="Alternar Tema Claro/Escuro">
+          <button onclick="toggleTheme()" id="theme-toggle-btn" class="text-[11px] text-[#5EEAD4] hover:text-white px-1.5 py-0.5 rounded-full transition flex items-center space-x-1" title="Alternar Tema Claro/Escuro">
             <i data-lucide="sun-moon" class="w-3.5 h-3.5"></i>
-            <span id="theme-label">Escuro</span>
+            <span id="theme-label" class="hidden sm:inline">Escuro</span>
           </button>
         </div>
 
@@ -327,7 +342,7 @@
             <span>Evolução Clínica & Histórico</span>
           </button>
 
-          <button onclick="switchTab('email-ingestion')" id="tab-email-ingestion" class="tab-btn flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-semibold text-[#8DA39E] hover:text-white hover:bg-[#131F22] border border-transparent transition">
+          <button onclick="switchTab('email-ingestion')" id="tab-email-ingestion" class="tab-btn detail-only flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-semibold text-[#8DA39E] hover:text-white hover:bg-[#131F22] border border-transparent transition whitespace-nowrap">
             <i data-lucide="mail" class="w-4 h-4"></i>
             <span>Recolha por Email (IA)</span>
             <span class="px-1.5 py-0.2 bg-[#14332D] text-[#5EEAD4] text-[9px] font-bold rounded-full border border-[#5EEAD4]/30">NOVO</span>
@@ -348,10 +363,15 @@
             <span>Aprender (23)</span>
           </button>
 
-          <button onclick="switchTab('cross-border')" id="tab-cross-border" class="tab-btn flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-semibold text-[#8DA39E] hover:text-white hover:bg-[#131F22] border border-transparent transition whitespace-nowrap">
+          <button onclick="switchTab('cross-border')" id="tab-cross-border" class="tab-btn detail-only flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-semibold text-[#8DA39E] hover:text-white hover:bg-[#131F22] border border-transparent transition whitespace-nowrap">
             <i data-lucide="shield" class="w-4 h-4"></i>
             <span>Partilha Segura & Emergência</span>
             <span class="px-1.5 py-0.2 bg-[#1E293B] text-[#94A3B8] text-[9px] font-bold rounded-full border border-slate-700">IPS / UE</span>
+          </button>
+
+          <button onclick="switchTab('settings')" id="tab-settings" class="tab-btn flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-semibold text-[#8DA39E] hover:text-white hover:bg-[#131F22] border border-transparent transition whitespace-nowrap">
+            <i data-lucide="settings" class="w-4 h-4"></i>
+            <span>Configurações</span>
           </button>
 
           <div class="ml-auto flex items-center space-x-2 pl-3">
@@ -444,7 +464,7 @@
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
           
           <!-- Cartão Principal de Tendência: Evolução Clínica -->
-          <div class="lg:col-span-2 bg-[#131F22] rounded-3xl border border-[#1E3338] p-6 shadow-xl flex flex-col justify-between">
+          <div id="dashboard-chart-col" class="lg:col-span-2 bg-[#131F22] rounded-3xl border border-[#1E3338] p-6 shadow-xl flex flex-col justify-between">
             <div>
               <!-- Header do Gráfico igual ao Ecrã 2 do Telemóvel -->
               <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-[#1E3338] gap-4">
@@ -500,7 +520,7 @@
           </div>
 
           <!-- Coluna Lateral: Mini Sparklines (Idênticos ao Ecrã 2 do Telemóvel) + Resumo Clínico -->
-          <div class="space-y-4 flex flex-col justify-between">
+          <div class="detail-only space-y-4 flex flex-col justify-between">
             
             <div class="space-y-3">
               <h3 class="text-xs font-bold text-[#8DA39E] uppercase tracking-wider">Outros Biomarcadores em Destaque</h3>
@@ -585,7 +605,7 @@
             </div>
 
             <!-- Barra de Pesquisa e Filtros (8 Categorias + 9 Períodos) -->
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div class="detail-only grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div class="relative">
                 <input type="text" id="history-search-input" oninput="renderHistoryList()" placeholder="Pesquisar exame, laboratório, parâmetro..." class="w-full text-xs bg-[#0C1416] text-white border border-[#1E3338] focus:border-[#B8F04A] rounded-xl py-2 pl-8 pr-3 focus:outline-none">
                 <i data-lucide="search" class="w-3.5 h-3.5 text-[#8DA39E] absolute left-2.5 top-2.5"></i>
@@ -1250,6 +1270,136 @@
         </div>
       </div>
 
+      <!-- ======================================================== -->
+      <!-- ABA 7: CONFIGURAÇÕES (PERFIL, LETRA, EXPERIÊNCIA, ACESSIBILIDADE, RGPD) -->
+      <!-- ======================================================== -->
+      <div id="view-settings" class="view-panel hidden space-y-6">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+          <!-- Cartão 1: Dados do Utilizador -->
+          <div class="bg-[#131F22] rounded-3xl border border-[#1E3338] p-6 shadow-xl space-y-4">
+            <div class="flex items-center justify-between border-b border-[#1E3338] pb-3">
+              <div>
+                <h2 class="text-lg font-extrabold text-white flex items-center space-x-2">
+                  <i data-lucide="user-cog" class="w-5 h-5 text-[#B8F04A]"></i>
+                  <span>Dados da Conta & Perfil</span>
+                </h2>
+                <p id="cfg-role-note" class="text-xs text-[#8DA39E] mt-0.5">Atualize os seus dados pessoais e de contacto.</p>
+              </div>
+              <span id="cfg-id-badge" class="text-[11px] font-mono px-2.5 py-1 rounded-full bg-[#0C1416] text-[#5EEAD4] border border-[#1E3338]">SNS</span>
+            </div>
+
+            <div class="space-y-3 text-xs">
+              <div>
+                <label class="text-[11px] text-[#8DA39E] block mb-1">Nome Completo</label>
+                <input type="text" id="cfg-fullname" class="w-full bg-[#0C1416] text-white border border-[#1E3338] focus:border-[#B8F04A] rounded-xl px-3.5 py-2 focus:outline-none">
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="text-[11px] text-[#8DA39E] block mb-1">Email / Caixa de Ingestão</label>
+                  <input type="email" id="cfg-email" class="w-full bg-[#0C1416] text-white border border-[#1E3338] focus:border-[#B8F04A] rounded-xl px-3.5 py-2 focus:outline-none">
+                </div>
+                <div id="cfg-birthdate-wrap">
+                  <label class="text-[11px] text-[#8DA39E] block mb-1">Data de Nascimento</label>
+                  <input type="date" id="cfg-birthdate" class="w-full bg-[#0C1416] text-white border border-[#1E3338] focus:border-[#B8F04A] rounded-xl px-3.5 py-2 focus:outline-none">
+                </div>
+              </div>
+              <div id="cfg-alerts-wrap">
+                <label class="text-[11px] text-[#8DA39E] block mb-1">Alertas Clínicos Vitais (separados por vírgula)</label>
+                <input type="text" id="cfg-alerts" placeholder="Ex: Alergia a Iodo, Pacemaker, Varfarina 5mg" class="w-full bg-[#0C1416] text-white border border-[#1E3338] focus:border-[#B8F04A] rounded-xl px-3.5 py-2 focus:outline-none">
+              </div>
+              <div>
+                <label class="text-[11px] text-[#8DA39E] block mb-1">Nova Palavra-passe (deixe vazio para manter)</label>
+                <input type="password" id="cfg-password" placeholder="Mínimo 6 caracteres" class="w-full bg-[#0C1416] text-white border border-[#1E3338] focus:border-[#B8F04A] rounded-xl px-3.5 py-2 focus:outline-none">
+              </div>
+            </div>
+
+            <div id="cfg-profile-feedback" class="hidden text-xs p-2.5 rounded-xl"></div>
+
+            <button type="button" onclick="saveProfileSettings()" class="w-full py-2.5 bg-[#B8F04A] hover:bg-[#C9F762] text-[#0C1416] font-extrabold text-xs rounded-xl transition shadow-[0_0_12px_rgba(184,240,74,0.25)]">
+              Guardar Dados do Utilizador
+            </button>
+          </div>
+
+          <!-- Cartão 2: Acessibilidade, Letra, Tema & Modo de Experiência -->
+          <div class="bg-[#131F22] rounded-3xl border border-[#1E3338] p-6 shadow-xl space-y-5">
+            <div class="border-b border-[#1E3338] pb-3">
+              <h2 class="text-lg font-extrabold text-white flex items-center space-x-2">
+                <i data-lucide="sliders" class="w-5 h-5 text-[#5EEAD4]"></i>
+                <span>Acessibilidade & Interface</span>
+              </h2>
+              <p class="text-xs text-[#8DA39E] mt-0.5">Personalize o tamanho de letra, o nível de detalhe e o contraste visual.</p>
+            </div>
+
+            <!-- Tamanho da Letra -->
+            <div class="space-y-2">
+              <span class="text-xs font-bold text-white block">Tamanho da Letra</span>
+              <div class="grid grid-cols-3 gap-2">
+                <button type="button" onclick="setTextSize('standard')" id="btn-size-standard" class="py-2 px-3 rounded-xl text-xs font-bold border border-[#1E3338] bg-[#B8F04A] text-[#0C1416] transition">Normal (100%)</button>
+                <button type="button" onclick="setTextSize('large')" id="btn-size-large" class="py-2 px-3 rounded-xl text-xs font-bold border border-[#1E3338] bg-[#0C1416] text-[#8DA39E] hover:text-white transition">Grande (115%)</button>
+                <button type="button" onclick="setTextSize('xlarge')" id="btn-size-xlarge" class="py-2 px-3 rounded-xl text-xs font-bold border border-[#1E3338] bg-[#0C1416] text-[#8DA39E] hover:text-white transition">Muito Grande (130%)</button>
+              </div>
+            </div>
+
+            <!-- Nível de Experiência -->
+            <div class="space-y-2">
+              <span class="text-xs font-bold text-white block">Nível de Detalhe (Simples / Equilibrado / Detalhado)</span>
+              <div class="grid grid-cols-3 gap-2">
+                <button type="button" onclick="changeExperienceMode('simple')" id="btn-mode-simple" class="py-2 px-3 rounded-xl text-xs font-bold border border-[#1E3338] bg-[#0C1416] text-[#8DA39E] hover:text-white transition">Simples</button>
+                <button type="button" onclick="changeExperienceMode('balanced')" id="btn-mode-balanced" class="py-2 px-3 rounded-xl text-xs font-bold border border-[#1E3338] bg-[#B8F04A] text-[#0C1416] transition">Equilibrado</button>
+                <button type="button" onclick="changeExperienceMode('detailed')" id="btn-mode-detailed" class="py-2 px-3 rounded-xl text-xs font-bold border border-[#1E3338] bg-[#0C1416] text-[#8DA39E] hover:text-white transition">Detalhado</button>
+              </div>
+              <p id="cfg-mode-desc" class="text-[11px] text-[#8DA39E]">Equilibrado: mostra gráficos, filtros, medições, eventos e biblioteca educativa.</p>
+            </div>
+
+            <!-- Tema, Alto Contraste e Redução de Animações -->
+            <div class="space-y-2.5 pt-1">
+              <div class="flex items-center justify-between p-3 rounded-2xl bg-[#0C1416] border border-[#1E3338]">
+                <div>
+                  <span class="text-xs font-bold text-white block">Tema Visual (Escuro OLED / Claro)</span>
+                  <span class="text-[11px] text-[#8DA39E]">Alterne entre fundo escuro OLED e modo claro diurno.</span>
+                </div>
+                <button type="button" onclick="toggleTheme()" class="px-3.5 py-1.5 rounded-xl bg-[#162529] border border-[#1E3338] text-xs font-bold text-[#B8F04A]">Alternar Tema</button>
+              </div>
+
+              <label class="flex items-center justify-between p-3 rounded-2xl bg-[#0C1416] border border-[#1E3338] cursor-pointer">
+                <div>
+                  <span class="text-xs font-bold text-white block">Alto Contraste</span>
+                  <span class="text-[11px] text-[#8DA39E]">Reforça contornos e contraste para baixa visão.</span>
+                </div>
+                <input type="checkbox" id="cfg-contrast-toggle" onchange="toggleHighContrast(this.checked)" class="w-4 h-4 accent-[#B8F04A]">
+              </label>
+
+              <label class="flex items-center justify-between p-3 rounded-2xl bg-[#0C1416] border border-[#1E3338] cursor-pointer">
+                <div>
+                  <span class="text-xs font-bold text-white block">Reduzir Animações</span>
+                  <span class="text-[11px] text-[#8DA39E]">Desativa efeitos de pulso e transições rápidas.</span>
+                </div>
+                <input type="checkbox" id="cfg-motion-toggle" onchange="toggleReducedMotion(this.checked)" class="w-4 h-4 accent-[#B8F04A]">
+              </label>
+            </div>
+          </div>
+
+          <!-- Cartão 3: Portabilidade RGPD & Registo de Auditoria -->
+          <div class="lg:col-span-2 bg-[#131F22] rounded-3xl border border-[#1E3338] p-6 shadow-xl space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#1E3338] pb-3">
+              <div>
+                <h2 class="text-base font-extrabold text-white flex items-center space-x-2">
+                  <i data-lucide="shield-check" class="w-5 h-5 text-[#5EEAD4]"></i>
+                  <span>Privacidade, Exportação RGPD & Registo de Auditoria</span>
+                </h2>
+                <p class="text-xs text-[#8DA39E]">Consulte todos os acessos à sua carteira clínica ou descarregue uma cópia completa dos seus dados.</p>
+              </div>
+              <button type="button" onclick="exportWalletJson()" class="px-4 py-2 rounded-xl bg-[#14332D] hover:bg-[#1E473F] text-[#5EEAD4] border border-[#5EEAD4]/40 text-xs font-extrabold transition">
+                ⬇ Exportar Carteira (JSON)
+              </button>
+            </div>
+            <div id="cfg-audit-list" class="space-y-2 max-h-56 overflow-y-auto text-xs"></div>
+          </div>
+
+        </div>
+      </div>
+
     </main>
 
     <!-- MODAL: EDITAR CLASSIFICAÇÃO DE EXAME (SEM DUPLICAR ORIGINAL) -->
@@ -1521,10 +1671,17 @@
       }
 
       if (p.preferences) {
-        applyThemeAndExperience(p.preferences.theme || 'dark', p.preferences.mode || 'balanced');
+        applyThemeAndExperience(
+          p.preferences.theme || 'dark',
+          p.preferences.mode || 'balanced',
+          p.preferences.textSize || 'standard',
+          p.preferences.contrast || 'standard',
+          Boolean(p.preferences.reducedMotion)
+        );
       }
 
       await refreshClinicalWorkspace();
+      populateSettingsView();
       switchTab('dashboard');
       lucide.createIcons();
     }
@@ -1635,6 +1792,8 @@
 
       if (tabId === 'dashboard') {
         renderChart();
+      } else if (tabId === 'settings') {
+        populateSettingsView();
       }
     }
 
@@ -2042,9 +2201,17 @@
       other: 'Outro'
     };
 
-    function applyThemeAndExperience(theme, mode) {
+    let currentPreferences = { theme: 'dark', mode: 'balanced', textSize: 'standard', contrast: 'standard', reducedMotion: false };
+
+    function applyThemeAndExperience(theme, mode, textSize, contrast, reducedMotion) {
+      if (theme !== undefined) currentPreferences.theme = theme;
+      if (mode !== undefined) currentPreferences.mode = mode;
+      if (textSize !== undefined) currentPreferences.textSize = textSize;
+      if (contrast !== undefined) currentPreferences.contrast = contrast;
+      if (reducedMotion !== undefined) currentPreferences.reducedMotion = reducedMotion;
+
       const html = document.documentElement;
-      if (theme === 'light') {
+      if (currentPreferences.theme === 'light') {
         html.classList.remove('dark');
         html.classList.add('light');
         const lbl = document.getElementById('theme-label');
@@ -2055,28 +2222,166 @@
         const lbl = document.getElementById('theme-label');
         if (lbl) lbl.innerText = 'Escuro';
       }
+
       document.body.classList.remove('mode-simple', 'mode-balanced', 'mode-detailed');
-      document.body.classList.add('mode-' + (mode || 'balanced'));
+      document.body.classList.add('mode-' + (currentPreferences.mode || 'balanced'));
       const sel = document.getElementById('experience-mode-select');
-      if (sel) sel.value = mode || 'balanced';
+      if (sel) sel.value = currentPreferences.mode || 'balanced';
+
+      // Tamanho da Letra global via root rem
+      const sizeMap = { standard: '16px', large: '18.4px', xlarge: '20.8px' };
+      html.style.fontSize = sizeMap[currentPreferences.textSize] || '16px';
+
+      // Alto contraste & Animações reduzidas
+      html.classList.toggle('high-contrast', currentPreferences.contrast === 'high');
+      html.classList.toggle('reduced-motion', Boolean(currentPreferences.reducedMotion));
+
+      // Sincronizar botões em Configurações
+      ['standard', 'large', 'xlarge'].forEach(sz => {
+        const b = document.getElementById('btn-size-' + sz);
+        if (b) {
+          b.className = sz === currentPreferences.textSize
+            ? 'py-2 px-3 rounded-xl text-xs font-extrabold border border-[#B8F04A] bg-[#B8F04A] text-[#0C1416] transition'
+            : 'py-2 px-3 rounded-xl text-xs font-bold border border-[#1E3338] bg-[#0C1416] text-[#8DA39E] hover:text-white transition';
+        }
+      });
+      ['simple', 'balanced', 'detailed'].forEach(md => {
+        const b = document.getElementById('btn-mode-' + md);
+        if (b) {
+          b.className = md === currentPreferences.mode
+            ? 'py-2 px-3 rounded-xl text-xs font-extrabold border border-[#B8F04A] bg-[#B8F04A] text-[#0C1416] transition'
+            : 'py-2 px-3 rounded-xl text-xs font-bold border border-[#1E3338] bg-[#0C1416] text-[#8DA39E] hover:text-white transition';
+        }
+      });
+      const modeDesc = document.getElementById('cfg-mode-desc');
+      if (modeDesc) {
+        const descs = {
+          simple: 'Simples: esconde separadores avançados, mini-gráficos e filtros complexos para leitura fácil.',
+          balanced: 'Equilibrado: mostra gráficos, filtros, medições, eventos e biblioteca educativa.',
+          detailed: 'Detalhado: mostra tudo incluindo metadados técnicos (LOINC, SHA-256) e auditoria completa.'
+        };
+        modeDesc.innerText = descs[currentPreferences.mode] || descs.balanced;
+      }
+      const cToggle = document.getElementById('cfg-contrast-toggle');
+      if (cToggle) cToggle.checked = currentPreferences.contrast === 'high';
+      const mToggle = document.getElementById('cfg-motion-toggle');
+      if (mToggle) mToggle.checked = Boolean(currentPreferences.reducedMotion);
+    }
+
+    async function persistPreferences(patch) {
+      if (window.PulsoAPI && currentAuthState.role === 'patient') {
+        try { await window.PulsoAPI.updatePreferences(patch); } catch (e) {}
+      }
     }
 
     async function toggleTheme() {
-      const isLight = document.documentElement.classList.contains('light');
-      const nextTheme = isLight ? 'dark' : 'light';
-      const currentMode = document.getElementById('experience-mode-select')?.value || 'balanced';
-      applyThemeAndExperience(nextTheme, currentMode);
-      if (window.PulsoAPI && currentAuthState.role === 'patient') {
-        try { await window.PulsoAPI.updatePreferences({ theme: nextTheme }); } catch (e) {}
-      }
+      const nextTheme = currentPreferences.theme === 'light' ? 'dark' : 'light';
+      applyThemeAndExperience(nextTheme);
+      await persistPreferences({ theme: nextTheme });
     }
 
     async function changeExperienceMode(mode) {
-      const isLight = document.documentElement.classList.contains('light');
-      applyThemeAndExperience(isLight ? 'light' : 'dark', mode);
-      if (window.PulsoAPI && currentAuthState.role === 'patient') {
-        try { await window.PulsoAPI.updatePreferences({ mode }); } catch (e) {}
+      applyThemeAndExperience(undefined, mode);
+      await persistPreferences({ mode });
+    }
+
+    async function setTextSize(size) {
+      applyThemeAndExperience(undefined, undefined, size);
+      await persistPreferences({ textSize: size });
+    }
+
+    async function toggleHighContrast(enabled) {
+      const contrast = enabled ? 'high' : 'standard';
+      applyThemeAndExperience(undefined, undefined, undefined, contrast);
+      await persistPreferences({ contrast });
+    }
+
+    async function toggleReducedMotion(enabled) {
+      applyThemeAndExperience(undefined, undefined, undefined, undefined, enabled);
+      await persistPreferences({ reducedMotion: enabled });
+    }
+
+    function populateSettingsView() {
+      const isDoctor = currentAuthState.role === 'doctor';
+      const userObj = isDoctor ? (currentAuthState.doctor || currentAuthState.user) : (currentAuthState.patient || currentAuthState.user);
+      if (!userObj) return;
+
+      document.getElementById('cfg-fullname').value = userObj.fullName || '';
+      document.getElementById('cfg-email').value = userObj.email || '';
+      document.getElementById('cfg-password').value = '';
+      document.getElementById('cfg-birthdate-wrap').classList.toggle('hidden', isDoctor);
+      document.getElementById('cfg-alerts-wrap').classList.toggle('hidden', isDoctor);
+
+      if (isDoctor) {
+        document.getElementById('cfg-id-badge').innerText = `Cédula #${userObj.licenseNumber || '48192'}`;
+        document.getElementById('cfg-role-note').innerText = 'Conta Profissional (Médica/o) — apenas os seus dados profissionais são editáveis.';
+      } else {
+        document.getElementById('cfg-id-badge').innerText = `SNS #${userObj.snsNumber || ''}`;
+        document.getElementById('cfg-role-note').innerText = 'Conta de Utente — soberania total sobre dados pessoais e preferências.';
+        document.getElementById('cfg-birthdate').value = userObj.birthDate || '';
+        const alerts = Array.isArray(userObj.clinicalAlerts) ? userObj.clinicalAlerts : [];
+        document.getElementById('cfg-alerts').value = alerts.join(', ');
       }
+
+      const auditEl = document.getElementById('cfg-audit-list');
+      if (auditEl) {
+        const logs = liveRecordsState.auditLogs || [];
+        auditEl.innerHTML = logs.length ? logs.slice(0, 20).map(l => `
+          <div class="p-2.5 rounded-xl bg-[#0C1416] border border-[#1E3338] flex justify-between items-center">
+            <div>
+              <span class="font-bold text-[#B8F04A]">${l.action}</span>
+              <span class="text-white ml-1.5">${l.actorName || ''} (${l.actorRole || ''})</span>
+              <p class="text-[11px] text-[#8DA39E]">${l.details || ''}</p>
+            </div>
+            <span class="text-[10px] font-mono text-[#5F7571]">${new Date((l.createdAt || 0) * 1000).toLocaleString('pt-PT')}</span>
+          </div>`).join('') : '<p class="text-[#8DA39E]">Sem registos de auditoria.</p>';
+      }
+    }
+
+    async function saveProfileSettings() {
+      const fb = document.getElementById('cfg-profile-feedback');
+      const isDoctor = currentAuthState.role === 'doctor';
+      const payload = {
+        fullName: document.getElementById('cfg-fullname').value.trim(),
+        email: document.getElementById('cfg-email').value.trim()
+      };
+      const pwd = document.getElementById('cfg-password').value;
+      if (pwd) payload.password = pwd;
+      if (!isDoctor) {
+        payload.birthDate = document.getElementById('cfg-birthdate').value;
+        payload.clinicalAlerts = document.getElementById('cfg-alerts').value.split(',').map(s => s.trim()).filter(Boolean);
+      }
+
+      try {
+        await window.PulsoAPI.updateProfile(payload);
+        const me = await window.PulsoAPI.me();
+        if (me && me.authenticated) {
+          currentAuthState = me;
+          const u = isDoctor ? me.user : (me.patient || me.user);
+          document.getElementById('header-user-name').innerText = u.fullName;
+          if (!isDoctor) document.getElementById('banner-patient-name').innerText = u.fullName;
+        }
+        await refreshClinicalWorkspace();
+        populateSettingsView();
+        fb.className = 'text-xs p-2.5 rounded-xl bg-[#14332D] text-[#5EEAD4] border border-[#5EEAD4]/30';
+        fb.innerText = '✅ Dados do utilizador atualizados e guardados na base de dados!';
+        fb.classList.remove('hidden');
+      } catch (err) {
+        fb.className = 'text-xs p-2.5 rounded-xl bg-[#2A1416] text-red-200 border border-red-500/30';
+        fb.innerText = err.message || 'Erro ao atualizar perfil.';
+        fb.classList.remove('hidden');
+      }
+    }
+
+    function exportWalletJson() {
+      const dataStr = JSON.stringify({ exportedAt: new Date().toISOString(), account: currentAuthState, records: liveRecordsState }, null, 2);
+      const blob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `pulso-carteira-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
     }
 
     function periodCutoffDate(period) {
@@ -2141,7 +2446,8 @@
                   ${srcBadge}
                   <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#0C1416] text-[#8DA39E] border border-[#1E3338]">${catLabel}</span>
                 </div>
-                <p class="text-xs text-[#8DA39E] mt-0.5">${ex.examDate} · ${ex.institution || 'Instituição de Saúde'} · ${bioSummary}</p>
+                <p class="text-xs text-[#8DA39E] mt-0.5">${ex.examDate} · ${ex.institution || ex.issuer || 'Instituição de Saúde'} · ${bioSummary}</p>
+                <p class="detailed-only text-[10px] font-mono text-[#5EEAD4] mt-1">ID: ${ex.id} · Canal: ${ex.intakeChannel || 'Upload'} · SHA-256: ${(ex.sha256 || 'verificado').slice(0, 12)}</p>
               </div>
             </div>
             <div class="flex items-center space-x-2">
